@@ -141,7 +141,7 @@ fn run(args: &Args) -> Result<Finish> {
 
     let ytdlp = tools::ready()?;
     println!("Reading the link...");
-    let info = ytdlp.info(&url)?;
+    let (info, json) = ytdlp.info(&url)?;
     let Some((video, playlist_item)) = pick_video(&info)? else {
         return Ok(Finish::Nothing);
     };
@@ -155,35 +155,66 @@ fn run(args: &Args) -> Result<Finish> {
         return Ok(Finish::Nothing);
     };
 
-    std::fs::create_dir_all(&folder)
-        .map_err(|e| format!("Could not create the folder {}: {e}", folder.display()))?;
-    println!("\nSaving to {}", folder.display());
-    // Parts of an interrupted download stay here, and yt-dlp resumes them
-    // when the same choice is downloaded again.
-    let work_folder = std::env::temp_dir().join("keepclip");
+    let work_folder = work_folder();
+    for dir in [&folder, &work_folder] {
+        std::fs::create_dir_all(dir)
+            .map_err(|e| format!("Could not create the folder {}: {e}", dir.display()))?;
+    }
     let request = Request {
         url: &url,
         choice,
-        folder: &folder,
         work_folder: &work_folder,
         playlist_item,
     };
-    let mut saved = PathBuf::from(download(&ytdlp, &request)?);
-    if request.finished_in() != folder.as_path() {
-        saved = move_into(&saved, &folder)?;
+
+    // Ask before downloading, so a "no" costs no time. If yt-dlp cannot say
+    // the name, the question comes when the file is ready instead.
+    let mut may_replace = false;
+    if let Some(name) = ytdlp.final_name(&json, &request)
+        && folder.join(&name).exists()
+    {
+        if !ask_to_replace(&name)? {
+            println!("Kept the file that was there.");
+            return Ok(Finish::Nothing);
+        }
+        may_replace = true;
     }
+
+    println!("\nSaving to {}", folder.display());
+    let finished = PathBuf::from(download(&ytdlp, &request)?);
+    let Some(saved) = move_into(&finished, &folder, may_replace)? else {
+        return Ok(Finish::Nothing);
+    };
     println!("\nSaved: {}", saved.display());
     let notified = notify::saved(&saved);
     Ok(Finish::Saved { notified })
 }
 
-/// Moves a finished file into `folder`, replacing a file with the same name:
-/// the same choice of the same video, downloaded again.
-fn move_into(file: &Path, folder: &Path) -> Result<PathBuf> {
+/// Where yt-dlp makes the files. Parts of an interrupted download stay here,
+/// and yt-dlp resumes them when the same choice is downloaded again.
+fn work_folder() -> PathBuf {
+    std::env::temp_dir().join("keepclip")
+}
+
+fn ask_to_replace(name: &str) -> Result<bool> {
+    println!("\nThe folder already has \"{name}\".");
+    let answer = console::ask("Replace it? It stays as it is until the new one is ready. (y/N) ")?;
+    Ok(answer.eq_ignore_ascii_case("y") || answer.eq_ignore_ascii_case("yes"))
+}
+
+/// Moves the finished file from the work folder into `folder`. A file with
+/// the same name is replaced only when `may_replace`, or when the user says
+/// so now; otherwise the new file is deleted and `None` returned.
+fn move_into(file: &Path, folder: &Path, may_replace: bool) -> Result<Option<PathBuf>> {
     let name = file
         .file_name()
         .ok_or("yt-dlp gave a path without a file name.")?;
     let target = folder.join(name);
+    if target.exists() && !may_replace && !ask_to_replace(&name.to_string_lossy())? {
+        let _ = std::fs::remove_file(file);
+        println!("Kept the file that was there; the new download was deleted.");
+        return Ok(None);
+    }
     let fail = |e: std::io::Error| {
         format!(
             "Could not move {} to {}: {e}",
@@ -191,12 +222,21 @@ fn move_into(file: &Path, folder: &Path) -> Result<PathBuf> {
             folder.display()
         )
     };
-    // Across drives a rename fails; copying and deleting does the same.
+    // A rename replaces the old file in one step. Across drives it fails:
+    // then the file is copied next to the old one first, so a failed copy
+    // never leaves the old file half overwritten.
     if std::fs::rename(file, &target).is_err() {
-        std::fs::copy(file, &target).map_err(fail)?;
-        std::fs::remove_file(file).map_err(fail)?;
+        let mut staging = target.clone().into_os_string();
+        staging.push(".keepclip-part");
+        let staging = PathBuf::from(staging);
+        if let Err(e) = std::fs::copy(file, &staging) {
+            let _ = std::fs::remove_file(&staging);
+            return Err(fail(e).into());
+        }
+        std::fs::rename(&staging, &target).map_err(fail)?;
+        let _ = std::fs::remove_file(file);
     }
-    Ok(target)
+    Ok(Some(target))
 }
 
 /// The link from the command line, the clipboard or the keyboard.
@@ -325,8 +365,9 @@ fn download(ytdlp: &ytdlp::YtDlp, request: &Request<'_>) -> Result<String> {
     })?;
     line.finish();
     if !downloaded {
-        // yt-dlp skips a file that is already in the folder.
-        println!("The file was already in the folder.");
+        // yt-dlp skips a file it finished before, left in the work folder
+        // when keepclip was closed before moving it.
+        println!("The file was ready from an earlier try.");
     }
     saved.ok_or_else(|| "yt-dlp finished without saying where the file is.".into())
 }
@@ -357,5 +398,62 @@ mod tests {
         assert!(args.choose_folder);
         assert!(parse(&["--dir"]).is_err());
         assert!(parse(&["--frobnicate"]).is_err());
+    }
+
+    /// A work folder and a download folder of their own, removed at the end.
+    struct Folders {
+        root: PathBuf,
+        work: PathBuf,
+        downloads: PathBuf,
+    }
+
+    impl Folders {
+        fn new(test: &str) -> Folders {
+            let root =
+                std::env::temp_dir().join(format!("keepclip-test-{test}-{}", std::process::id()));
+            let (work, downloads) = (root.join("work"), root.join("downloads"));
+            std::fs::create_dir_all(&work).unwrap();
+            std::fs::create_dir_all(&downloads).unwrap();
+            Folders {
+                root,
+                work,
+                downloads,
+            }
+        }
+    }
+
+    impl Drop for Folders {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.root);
+        }
+    }
+
+    #[test]
+    fn a_finished_file_moves_to_the_download_folder() {
+        let folders = Folders::new("move");
+        let finished = folders.work.join("A [x].mp4");
+        std::fs::write(&finished, "new").unwrap();
+        let saved = move_into(&finished, &folders.downloads, false).unwrap();
+        assert_eq!(saved, Some(folders.downloads.join("A [x].mp4")));
+        assert_eq!(std::fs::read_to_string(saved.unwrap()).unwrap(), "new");
+        assert!(!finished.exists());
+    }
+
+    #[test]
+    fn an_agreed_replacement_swaps_the_file_once_the_new_one_is_done() {
+        let folders = Folders::new("replace");
+        std::fs::write(folders.downloads.join("A [x].mp4"), "old").unwrap();
+        let finished = folders.work.join("A [x].mp4");
+        std::fs::write(&finished, "new").unwrap();
+        let saved = move_into(&finished, &folders.downloads, true)
+            .unwrap()
+            .unwrap();
+        assert_eq!(std::fs::read_to_string(saved).unwrap(), "new");
+        assert!(!finished.exists());
+        let left: Vec<_> = std::fs::read_dir(&folders.downloads)
+            .unwrap()
+            .map(|e| e.unwrap().file_name())
+            .collect();
+        assert_eq!(left, ["A [x].mp4"]);
     }
 }

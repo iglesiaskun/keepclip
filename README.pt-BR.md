@@ -110,11 +110,15 @@ com o canal quando o site deixa vazio quem postou, os caracteres que o
 Windows não aceita trocados e um corte em 120 caracteres. Os títulos vêm como
 o site dá, com emoji e hashtags.
 
-**Arquivos que já estão na pasta.** Um vídeo cujo arquivo já está lá não é
-baixado de novo, nem em outra resolução, porque o nome é o mesmo: mova ou
-renomeie o antigo antes. Um MP3 baixado de novo substitui o antigo. Pedaços
-de um download que parou no meio ficam em `%TEMP%\keepclip`, e o yt-dlp os
-aproveita quando você baixa a mesma opção de novo.
+**Arquivos que já estão na pasta.** Quando a pasta já tem um arquivo com o
+mesmo nome, como o mesmo vídeo em outra resolução ou o MP3 dele de antes, o
+keepclip pergunta antes de baixar se quer substituir. A resposta é não, a
+menos que você digite `y`. Se disser que sim, o arquivo antigo fica como está
+até o novo terminar, então um download que falhe não faz perder nada.
+
+O keepclip monta cada arquivo em `%TEMP%\keepclip` e o move para a sua pasta
+quando fica pronto. Pedaços de um download que parou no meio ficam lá, e o
+yt-dlp os aproveita quando você baixa a mesma opção de novo.
 
 **Um link com vários vídeos**, como um post com mais de um, mostra antes a
 lista deles (até 20) e baixa o que você escolher.

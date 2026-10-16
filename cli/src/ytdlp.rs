@@ -36,8 +36,9 @@ impl YtDlp {
         command
     }
 
-    /// What the link offers (`yt-dlp -J`).
-    pub fn info(&self, url: &str) -> Result<VideoInfo> {
+    /// What the link offers (`yt-dlp -J`), read, and the JSON as yt-dlp
+    /// printed it, for [`YtDlp::final_name`].
+    pub fn info(&self, url: &str) -> Result<(VideoInfo, String)> {
         let output = self
             .command(download::info_args(url, &self.tools))
             .output()
@@ -46,8 +47,24 @@ impl YtDlp {
             let messages = String::from_utf8_lossy(&output.stderr);
             return Err(explain(messages.lines()).into());
         }
-        let json = String::from_utf8_lossy(&output.stdout);
-        Ok(VideoInfo::parse(&json)?)
+        let json = String::from_utf8_lossy(&output.stdout).into_owned();
+        Ok((VideoInfo::parse(&json)?, json))
+    }
+
+    /// The name the downloaded file will have, asked from yt-dlp without
+    /// downloading: it reads `json`, the output of [`YtDlp::info`], from a
+    /// file in the work folder. `None` when yt-dlp could not say.
+    pub fn final_name(&self, json: &str, request: &Request<'_>) -> Option<String> {
+        let file = request
+            .work_folder
+            .join(format!("{}.info.json", std::process::id()));
+        std::fs::write(&file, json).ok()?;
+        let output = self
+            .command(download::name_args(request, &file, &self.tools))
+            .output();
+        let _ = std::fs::remove_file(&file);
+        let output = output.ok().filter(|o| o.status.success())?;
+        download::final_file_name(&String::from_utf8_lossy(&output.stdout), request.choice)
     }
 
     /// Downloads, calling `on_event` for each progress line.

@@ -1,5 +1,12 @@
 //! The command lines keepclip gives yt-dlp: one to read what a link offers,
-//! one to download the choice.
+//! one to learn the name the file will have, one to download it.
+//!
+//! yt-dlp makes every file in a work folder of keepclip's, and keepclip moves
+//! the finished file to the download folder. So yt-dlp never sees what is in
+//! the download folder: an MP3 made from a video starts as a file with that
+//! video's name, and yt-dlp, finding the video there, would take it as
+//! already downloaded and delete it after the conversion. keepclip checks the
+//! name first and asks before replacing a file.
 
 use crate::menu::{Choice, MP3_KBPS};
 use crate::progress;
@@ -34,26 +41,11 @@ pub struct Tools {
 pub struct Request<'a> {
     pub url: &'a str,
     pub choice: &'a Choice,
-    pub folder: &'a Path,
-    /// Where yt-dlp keeps the parts until the file is done, and where it
-    /// makes MP3s (see [`Request::finished_in`]).
+    /// Where yt-dlp makes the file, parts and all, before keepclip moves it
+    /// to the download folder.
     pub work_folder: &'a Path,
     /// Position of the chosen video in a playlist, counting from 1.
     pub playlist_item: Option<u64>,
-}
-
-impl Request<'_> {
-    /// Where yt-dlp leaves the finished file. A video goes straight to
-    /// `folder`. An MP3 stays in the work folder, and the app moves it: made
-    /// from a video, it would start as a file with the same name as that
-    /// video, and yt-dlp, finding the video in `folder`, would take it as
-    /// already downloaded and delete it after the conversion.
-    pub fn finished_in(&self) -> &Path {
-        match self.choice {
-            Choice::Video(_) => self.folder,
-            Choice::AudioMp3 { .. } => self.work_folder,
-        }
-    }
 }
 
 /// Arguments for `yt-dlp -J`, which prints what the link offers as JSON.
@@ -72,6 +64,17 @@ pub fn info_args(url: &str, tools: &Tools) -> Vec<OsString> {
     args
 }
 
+/// Arguments for printing the path the download would have, without
+/// downloading, from the JSON `yt-dlp -J` printed, saved in `info_json`. The
+/// path is the one before any conversion: see [`final_file_name`].
+pub fn name_args(request: &Request<'_>, info_json: &Path, tools: &Tools) -> Vec<OsString> {
+    let mut args = common(tools);
+    args.extend(of_the_file(request));
+    args.extend(["--simulate", "--print", "filename", "--load-info-json"].map(OsString::from));
+    args.push(info_json.as_os_str().to_owned());
+    args
+}
+
 /// Arguments for downloading a choice of the menu, with progress lines that
 /// [`progress::parse`] reads.
 pub fn download_args(request: &Request<'_>, tools: &Tools) -> Vec<OsString> {
@@ -85,39 +88,65 @@ pub fn download_args(request: &Request<'_>, tools: &Tools) -> Vec<OsString> {
     push(&progress::postprocess_template());
     push("--print");
     push(&progress::saved_template());
-    push("-o");
-    push(FILE_NAME);
-    push("--trim-filenames");
-    push(&MAX_NAME_CHARS.to_string());
-    push("--windows-filenames");
-    match request.choice {
-        Choice::Video(video) => {
-            push("-f");
-            push(&video.format_selector());
-            push("--merge-output-format");
-            push(video.merge_into);
-        }
-        Choice::AudioMp3 { source, .. } => {
-            push("-f");
-            push(source);
-            push("-x");
-            push("--audio-format");
-            push("mp3");
-            push("--audio-quality");
-            push(&format!("{MP3_KBPS}K"));
-        }
-    }
-    if let Some(item) = request.playlist_item {
-        push("--playlist-items");
-        push(&item.to_string());
-    }
-    let mut home = OsString::from("home:");
-    home.push(request.finished_in());
-    let mut work = OsString::from("temp:");
-    work.push(request.work_folder);
-    args.extend([OsString::from("-P"), home, OsString::from("-P"), work]);
+    args.extend(of_the_file(request));
     args.push(OsString::from("--"));
     args.push(OsString::from(request.url));
+    args
+}
+
+/// The name of the file a download printed by [`name_args`] ends up with:
+/// the last line, without its folder, and with `.mp3` for an MP3, which
+/// yt-dlp makes from that file after the download.
+pub fn final_file_name(printed: &str, choice: &Choice) -> Option<String> {
+    let path = printed
+        .lines()
+        .rev()
+        .map(str::trim)
+        .find(|l| !l.is_empty())?;
+    let name = path.rsplit(['\\', '/']).next().filter(|n| !n.is_empty())?;
+    Some(match choice {
+        Choice::Video(_) => name.to_string(),
+        Choice::AudioMp3 { .. } => {
+            let stem = name.rsplit_once('.').map_or(name, |(stem, _)| stem);
+            format!("{stem}.mp3")
+        }
+    })
+}
+
+/// What decides the file: the formats, the conversion, the name and the
+/// folder. The same for the name check and for the download.
+fn of_the_file(request: &Request<'_>) -> Vec<OsString> {
+    let mut args: Vec<String> = vec![
+        "-o".into(),
+        FILE_NAME.into(),
+        "--trim-filenames".into(),
+        MAX_NAME_CHARS.to_string(),
+        "--windows-filenames".into(),
+    ];
+    match request.choice {
+        Choice::Video(video) => args.extend([
+            "-f".into(),
+            video.format_selector(),
+            "--merge-output-format".into(),
+            video.merge_into.into(),
+        ]),
+        Choice::AudioMp3 { source, .. } => args.extend([
+            "-f".into(),
+            source.clone(),
+            "-x".into(),
+            "--audio-format".into(),
+            "mp3".into(),
+            "--audio-quality".into(),
+            format!("{MP3_KBPS}K"),
+        ]),
+    }
+    if let Some(item) = request.playlist_item {
+        args.extend(["--playlist-items".into(), item.to_string()]);
+    }
+    let mut args: Vec<OsString> = args.into_iter().map(OsString::from).collect();
+    let mut folder = OsString::from("home:");
+    folder.push(request.work_folder);
+    args.extend([OsString::from("-P"), folder]);
     args
 }
 

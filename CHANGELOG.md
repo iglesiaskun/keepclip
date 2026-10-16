@@ -26,6 +26,9 @@ changed.
   waits for Enter after an error.
 - **Download folder** chosen on the first run and kept in
   `%APPDATA%\keepclip\config.toml`; `--choose-folder` changes it.
+- **Files with the same name**, such as the same video at another resolution,
+  are replaced only if you say so when asked, and only once the new file is
+  complete.
 - **Programs downloaded on the first run**, after asking: yt-dlp, ffmpeg and
   Deno, from their official releases, each checked against its published
   SHA-256 checksum. yt-dlp updates itself when its last check is more than a

@@ -110,11 +110,15 @@ channel when the site leaves the uploader empty, characters Windows does not
 allow replaced, and a cut at 120 characters. Titles come as the site gives
 them, emoji and hashtags included.
 
-**Files already in the folder.** A video whose file is already there is not
-downloaded again, even at another resolution, since the name is the same:
-move or rename the old one first. An MP3 downloaded again replaces the old
-one. Parts of a download that stopped halfway stay in `%TEMP%\keepclip`, and
-yt-dlp picks them up when you download the same choice again.
+**Files already in the folder.** When the folder already has a file with the
+same name, such as the same video at another resolution or its MP3 from
+before, keepclip asks before downloading whether to replace it. The answer
+is no unless you type `y`. If you say yes, the old file stays as it is until
+the new one is complete, so a failed download loses nothing.
+
+keepclip makes each file in `%TEMP%\keepclip` and moves it to your folder
+when it is complete. Parts of a download that stopped halfway stay there,
+and yt-dlp picks them up when you download the same choice again.
 
 **A link with several videos**, such as a post with more than one, shows a
 list of them first (up to 20) and downloads the one you pick.
