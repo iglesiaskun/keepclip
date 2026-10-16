@@ -7,7 +7,7 @@ fn reads_a_video() {
     let video = VideoInfo::parse(include_str!("fixtures/separate-streams.json")).unwrap();
     assert_eq!(video.id, "sample1");
     assert_eq!(video.title.as_deref(), Some("Sample video"));
-    assert_eq!(video.uploader.as_deref(), Some("Sample channel"));
+    assert_eq!(video.uploader.as_deref(), Some("Sample uploader"));
     assert_eq!(video.duration, Some(635.0));
     assert!(!video.is_playlist());
     assert_eq!(video.formats.len(), 53);
@@ -44,6 +44,17 @@ fn unknown_fields_and_nulls_are_fine() {
     assert_eq!(video.title, None);
     assert_eq!(video.formats[0].height, None);
     assert_eq!(video.formats[0].fps, None);
+}
+
+#[test]
+fn an_empty_uploader_gives_way_to_the_channel() {
+    let video = VideoInfo::parse(include_str!("fixtures/empty-uploader.json")).unwrap();
+    assert_eq!(video.uploader, None);
+    assert_eq!(video.author(), Some("Sample uploader channel"));
+    let both = VideoInfo::parse(include_str!("fixtures/separate-streams.json")).unwrap();
+    assert_eq!(both.author(), Some("Sample uploader"));
+    let blank = VideoInfo::parse(r#"{"id": "x", "title": "  ", "uploader": ""}"#).unwrap();
+    assert_eq!((blank.title.as_deref(), blank.author()), (None, None));
 }
 
 #[test]

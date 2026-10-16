@@ -31,6 +31,7 @@ fn video_1080() -> Choice {
         video: "299".to_string(),
         audio: Some("140".to_string()),
         size: None,
+        merge_into: "mp4/mkv",
     })
 }
 
@@ -92,9 +93,10 @@ fn files_are_named_after_the_uploader_title_and_id() {
         playlist_item: None,
     };
     let args = text(download::download_args(&request, &tools()));
+    // The channel stands in for an empty uploader.
     assert_eq!(
         value(&args, "-o"),
-        Some("%(uploader)s - %(title)s [%(id)s].%(ext)s")
+        Some("%(uploader,channel|Unknown)s - %(title)s [%(id)s].%(ext)s")
     );
     assert_eq!(value(&args, "--trim-filenames"), Some("120"));
     assert!(args.contains(&"--windows-filenames".to_string()));
@@ -127,20 +129,25 @@ fn progress_comes_one_line_at_a_time_in_keepclip_templates() {
 }
 
 #[test]
-fn audio_only_converts_the_best_sound_to_mp3() {
-    let choice = Choice::AudioMp3 { size: None };
-    let request = Request {
-        url: "https://v.example/1",
-        choice: &choice,
-        folder: Path::new("D:\\Music"),
-        playlist_item: None,
-    };
-    let args = text(download::download_args(&request, &tools()));
-    assert_eq!(value(&args, "-f"), Some("ba/b"));
-    assert!(args.contains(&"-x".to_string()));
-    assert_eq!(value(&args, "--audio-format"), Some("mp3"));
-    assert_eq!(value(&args, "--audio-quality"), Some("192K"));
-    assert_eq!(value(&args, "--merge-output-format"), None);
+fn audio_only_converts_its_source_to_mp3() {
+    for source in ["ba/b", "video-with-sound"] {
+        let choice = Choice::AudioMp3 {
+            size: None,
+            source: source.to_string(),
+        };
+        let request = Request {
+            url: "https://v.example/1",
+            choice: &choice,
+            folder: Path::new("D:\\Music"),
+            playlist_item: None,
+        };
+        let args = text(download::download_args(&request, &tools()));
+        assert_eq!(value(&args, "-f"), Some(source));
+        assert!(args.contains(&"-x".to_string()));
+        assert_eq!(value(&args, "--audio-format"), Some("mp3"));
+        assert_eq!(value(&args, "--audio-quality"), Some("192K"));
+        assert_eq!(value(&args, "--merge-output-format"), None);
+    }
 }
 
 #[test]

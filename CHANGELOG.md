@@ -18,8 +18,9 @@ changed.
   `keepclip` alone uses the clipboard or asks for a link.
 - **A menu with sizes**: one line per resolution, with the video that plays
   almost everywhere (H.264 and AAC in MP4) where the site has it, and the size
-  of each choice, exact, estimated (~) or unknown.
-- **Audio only**: saves the sound as a 192 kbps MP3.
+  of each choice: exact, estimated (~) by the site or from the bitrate and the
+  length, or unknown.
+- **Audio only**: saves the video's own sound as a 192 kbps MP3.
 - **Progress** of each part of the download, then a Windows notification that
   opens the folder when clicked. The window closes by itself afterwards, or
   waits for Enter after an error.

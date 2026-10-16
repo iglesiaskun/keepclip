@@ -233,8 +233,8 @@ fn pick_video(info: &VideoInfo) -> Result<Option<(&VideoInfo, Option<u64>)>> {
 fn describe(video: &VideoInfo) {
     let title = video.title.as_deref().unwrap_or(&video.id);
     let mut line = format!("\n{title}");
-    if let Some(uploader) = &video.uploader {
-        line.push_str(&format!(" | {uploader}"));
+    if let Some(author) = video.author() {
+        line.push_str(&format!(" | {author}"));
     }
     if let Some(seconds) = video.duration {
         line.push_str(&format!(" | {}", units::duration(seconds as u64)));

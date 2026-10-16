@@ -93,14 +93,22 @@ downloads the link in the clipboard. The other ways to start it:
 **The choices.** There is one line per resolution, from the highest down,
 and then **Audio only (MP3)**. For each resolution keepclip takes the video
 that plays almost everywhere, H.264 with AAC sound in an MP4 file, when the
-site has it; where it does not, as with some videos above 1080p, it takes the
-best one there and the file may be MKV instead. The MP3 is 192 kbps, so its
-size is known in advance. "~" marks a size the site only estimated, and "size
-unknown" a size it did not give.
+site has it. Above the highest resolution in H.264, as with some videos above
+1080p, it takes the best video there is, which may play in fewer places;
+below it, resolutions without H.264 are left out. Files are MP4, or MKV when
+the video and the sound do not fit in an MP4.
 
-**File names** follow `<uploader> - <title> [<video id>].<ext>`, with
-characters Windows does not allow replaced, and are cut at 120 characters. A
-video that is already in the folder is not downloaded again.
+**The MP3** is 192 kbps, made from the video's own sound, so its size is
+known in advance from the length.
+
+**Sizes** marked "~" are estimates, by the site or from the bitrate and the
+length; "size unknown" means the site gave neither.
+
+**File names** follow `<uploader> - <title> [<video id>].<ext>`, with the
+channel when the site leaves the uploader empty, characters Windows does not
+allow replaced, and a cut at 120 characters. Titles come as the site gives
+them, emoji and hashtags included. A video that is already in the folder is
+not downloaded again.
 
 **A link with several videos**, such as a post with more than one, shows a
 list of them first (up to 20) and downloads the one you pick.

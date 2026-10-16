@@ -1,0 +1,36 @@
+{
+ "id": "sample1",
+ "title": "Sample video",
+ "uploader": "Sample uploader",
+ "duration": 9.5,
+ "_type": "video",
+ "formats": [
+  {
+   "format_id": "hls-audio-32000-Audio",
+   "ext": "mp4",
+   "vcodec": "none",
+   "tbr": 32,
+   "protocol": "m3u8_native",
+   "format_note": "Audio"
+  },
+  {
+   "format_id": "http-432",
+   "ext": "mp4",
+   "width": 368,
+   "height": 368,
+   "filesize_approx": 513000,
+   "tbr": 432,
+   "protocol": "https"
+  },
+  {
+   "format_id": "hls-213",
+   "ext": "mp4",
+   "vcodec": "avc1.4D4015",
+   "acodec": "none",
+   "width": 368,
+   "height": 368,
+   "tbr": 213.357,
+   "protocol": "m3u8_native"
+  }
+ ]
+}

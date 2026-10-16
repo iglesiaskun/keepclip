@@ -93,14 +93,22 @@ baixa o link da área de transferência. As outras formas de abrir:
 **As opções.** Há uma linha por resolução, da maior para a menor, e depois
 **Audio only (MP3)** (só o áudio). Em cada resolução o keepclip escolhe o
 vídeo que toca em quase todo lugar, H.264 com som AAC num arquivo MP4, quando
-o site tem; quando não tem, como em alguns vídeos acima de 1080p, escolhe o
-melhor que houver e o arquivo pode sair em MKV. O MP3 é de 192 kbps, então o
-tamanho é conhecido de antemão. "~" marca um tamanho que o site só estimou, e
-"size unknown", um tamanho que ele não informou.
+o site tem. Acima da maior resolução em H.264, como em alguns vídeos acima de
+1080p, escolhe o melhor vídeo que houver, que pode tocar em menos lugares;
+abaixo dela, resoluções sem H.264 ficam de fora. Os arquivos saem em MP4, ou
+em MKV quando o vídeo e o som não cabem num MP4.
+
+**O MP3** é de 192 kbps, feito com o som do próprio vídeo, então o tamanho é
+conhecido de antemão pela duração.
+
+**Tamanhos** com "~" são estimativas, do site ou pela taxa de bits e a
+duração; "size unknown" quer dizer que o site não deu nenhum dos dois.
 
 **Os nomes dos arquivos** seguem `<quem postou> - <título> [<id do vídeo>].<ext>`,
-com os caracteres que o Windows não aceita trocados, e são cortados em 120
-caracteres. Um vídeo que já está na pasta não é baixado de novo.
+com o canal quando o site deixa vazio quem postou, os caracteres que o
+Windows não aceita trocados e um corte em 120 caracteres. Os títulos vêm como
+o site dá, com emoji e hashtags. Um vídeo que já está na pasta não é baixado
+de novo.
 
 **Um link com vários vídeos**, como um post com mais de um, mostra antes a
 lista deles (até 20) e baixa o que você escolher.

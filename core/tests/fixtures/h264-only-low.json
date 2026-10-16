@@ -1,0 +1,105 @@
+{
+ "id": "sample1",
+ "title": "Sample video",
+ "uploader": "Sample uploader",
+ "channel": "Sample uploader channel",
+ "duration": 11,
+ "_type": "video",
+ "formats": [
+  {
+   "format_id": "audio",
+   "ext": "mp3",
+   "vcodec": "none",
+   "acodec": "mp3",
+   "protocol": "https"
+  },
+  {
+   "format_id": "h264_540p_379463-0",
+   "ext": "mp4",
+   "vcodec": "h264",
+   "acodec": "aac",
+   "width": 576,
+   "height": 1024,
+   "filesize": 534427,
+   "tbr": 379,
+   "protocol": "https"
+  },
+  {
+   "format_id": "h264_540p_379463-1",
+   "ext": "mp4",
+   "vcodec": "h264",
+   "acodec": "aac",
+   "width": 576,
+   "height": 1024,
+   "filesize": 534427,
+   "tbr": 379,
+   "protocol": "https"
+  },
+  {
+   "format_id": "hevc_540p_527801-0",
+   "ext": "mp4",
+   "vcodec": "h265",
+   "acodec": "aac",
+   "width": 576,
+   "height": 1024,
+   "filesize": 743342,
+   "tbr": 527,
+   "protocol": "https"
+  },
+  {
+   "format_id": "hevc_540p_527801-1",
+   "ext": "mp4",
+   "vcodec": "h265",
+   "acodec": "aac",
+   "width": 576,
+   "height": 1024,
+   "filesize": 743342,
+   "tbr": 527,
+   "protocol": "https"
+  },
+  {
+   "format_id": "hevc_720p_679534-0",
+   "ext": "mp4",
+   "vcodec": "h265",
+   "acodec": "aac",
+   "width": 720,
+   "height": 1280,
+   "filesize": 957040,
+   "tbr": 679,
+   "protocol": "https"
+  },
+  {
+   "format_id": "hevc_720p_679534-1",
+   "ext": "mp4",
+   "vcodec": "h265",
+   "acodec": "aac",
+   "width": 720,
+   "height": 1280,
+   "filesize": 957040,
+   "tbr": 679,
+   "protocol": "https"
+  },
+  {
+   "format_id": "hevc_1080p_951110-0",
+   "ext": "mp4",
+   "vcodec": "h265",
+   "acodec": "aac",
+   "width": 1080,
+   "height": 1920,
+   "filesize": 1339520,
+   "tbr": 951,
+   "protocol": "https"
+  },
+  {
+   "format_id": "hevc_1080p_951110-1",
+   "ext": "mp4",
+   "vcodec": "h265",
+   "acodec": "aac",
+   "width": 1080,
+   "height": 1920,
+   "filesize": 1339520,
+   "tbr": 951,
+   "protocol": "https"
+  }
+ ]
+}

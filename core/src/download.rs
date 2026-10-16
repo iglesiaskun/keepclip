@@ -7,8 +7,9 @@ use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
 /// Name of the saved file: who posted it, the title and the video id, which
-/// keeps two videos with the same title apart.
-pub const FILE_NAME: &str = "%(uploader)s - %(title)s [%(id)s].%(ext)s";
+/// keeps two videos with the same title apart. Some sites leave the uploader
+/// empty and give the channel; yt-dlp skips empty fields in a list.
+pub const FILE_NAME: &str = "%(uploader,channel|Unknown)s - %(title)s [%(id)s].%(ext)s";
 
 /// Longest file name, without the extension, in characters. Titles can be a
 /// whole post, and Windows refuses paths longer than 260 characters.
@@ -76,13 +77,12 @@ pub fn download_args(request: &Request<'_>, tools: &Tools) -> Vec<OsString> {
         Choice::Video(video) => {
             push("-f");
             push(&video.format_selector());
-            // MP4 when the video and sound fit in one, MKV otherwise.
             push("--merge-output-format");
-            push("mp4/mkv");
+            push(video.merge_into);
         }
-        Choice::AudioMp3 { .. } => {
+        Choice::AudioMp3 { source, .. } => {
             push("-f");
-            push("ba/b");
+            push(source);
             push("-x");
             push("--audio-format");
             push("mp3");

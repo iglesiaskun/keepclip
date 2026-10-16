@@ -1,7 +1,8 @@
 {
  "id": "sample1",
  "title": "Sample video",
- "uploader": "Sample channel",
+ "uploader": "Sample uploader",
+ "channel": "Sample uploader channel",
  "duration": 635,
  "_type": "video",
  "formats": [

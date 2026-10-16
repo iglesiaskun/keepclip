@@ -1,0 +1,66 @@
+{
+ "id": "sample1",
+ "title": "Sample video",
+ "uploader": "",
+ "channel": "Sample uploader channel",
+ "_type": "video",
+ "formats": [
+  {
+   "format_id": "dash-0000000000000001a",
+   "ext": "m4a",
+   "vcodec": "none",
+   "acodec": "mp4a.40.5",
+   "tbr": 50.842,
+   "protocol": "https",
+   "format_note": "DASH audio"
+  },
+  {
+   "format_id": "1",
+   "ext": "mp4",
+   "protocol": "https"
+  },
+  {
+   "format_id": "2",
+   "ext": "mp4",
+   "protocol": "https"
+  },
+  {
+   "format_id": "3",
+   "ext": "mp4",
+   "protocol": "https"
+  },
+  {
+   "format_id": "dash-0000000000000002v",
+   "ext": "mp4",
+   "vcodec": "vp09.00.31.08.00.01.01.01.00",
+   "acodec": "none",
+   "width": 720,
+   "height": 1280,
+   "tbr": 148.468,
+   "protocol": "https",
+   "format_note": "DASH video"
+  },
+  {
+   "format_id": "dash-0000000000000003v",
+   "ext": "mp4",
+   "vcodec": "vp09.00.31.08.00.01.01.01.00",
+   "acodec": "none",
+   "width": 720,
+   "height": 1280,
+   "tbr": 371.5,
+   "protocol": "https",
+   "format_note": "DASH video"
+  },
+  {
+   "format_id": "dash-0000000000000004v",
+   "ext": "mp4",
+   "vcodec": "vp09.00.31.08.00.01.01.01.00",
+   "acodec": "none",
+   "width": 720,
+   "height": 1280,
+   "tbr": 517.307,
+   "protocol": "https",
+   "format_note": "DASH video"
+  }
+ ]
+}

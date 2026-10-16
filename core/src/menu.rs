@@ -1,8 +1,9 @@
 //! The choices shown to the user: one per resolution, then sound only.
 //!
 //! Each resolution takes the video that plays almost everywhere when there is
-//! one: H.264, joined with AAC sound in an MP4 file. Where the site has no
-//! H.264 at a resolution, it takes the best video yt-dlp lists there.
+//! one: H.264, joined with AAC sound in an MP4 file. Above the highest H.264
+//! the site has, each resolution takes the best video yt-dlp lists there;
+//! below it, resolutions without H.264 are left out.
 
 use crate::info::{Format, Size, VideoInfo};
 use crate::units;
@@ -18,8 +19,17 @@ pub enum Choice {
     /// Only the sound, converted to MP3.
     AudioMp3 {
         size: Option<Size>,
+        /// The `-f` argument: the best sound, or the best video when it
+        /// carries the sound itself. Sites with video and sound in one file
+        /// may list a separate track that is not the video's sound, such as
+        /// the whole song behind a short clip.
+        source: String,
     },
 }
+
+/// `-f` for the best sound yt-dlp finds, or the best file when none has
+/// sound alone.
+pub const BEST_SOUND: &str = "ba/b";
 
 /// A video at one resolution, with sound when the site has it.
 #[derive(Debug, Clone, PartialEq)]
@@ -33,6 +43,10 @@ pub struct VideoChoice {
     pub audio: Option<String>,
     /// Video and sound together; `None` when the site does not give it.
     pub size: Option<Size>,
+    /// yt-dlp's `--merge-output-format` for joining the two: `"mp4"` when both
+    /// already come in MP4 files, which always fit together; otherwise
+    /// `"mp4/mkv"`, MP4 when yt-dlp knows the codecs fit and MKV when not.
+    pub merge_into: &'static str,
 }
 
 impl VideoChoice {
@@ -68,7 +82,7 @@ impl Choice {
     pub fn size(&self) -> Option<Size> {
         match self {
             Choice::Video(v) => v.size,
-            Choice::AudioMp3 { size } => *size,
+            Choice::AudioMp3 { size, .. } => *size,
         }
     }
 
@@ -96,6 +110,15 @@ pub fn build(info: &VideoInfo) -> Vec<Choice> {
     let mut resolutions: Vec<u64> = videos.iter().filter_map(|f| f.resolution()).collect();
     resolutions.sort_unstable_by(|a, b| b.cmp(a));
     resolutions.dedup();
+    // Below the highest H.264, a resolution without H.264 only adds a line
+    // that plays in fewer places.
+    let h264_at = |lines: u64| {
+        videos
+            .iter()
+            .any(|f| f.is_h264() && f.resolution() == Some(lines))
+    };
+    let top_h264 = resolutions.iter().copied().find(|&lines| h264_at(lines));
+    resolutions.retain(|&lines| Some(lines) > top_h264 || h264_at(lines));
 
     let mut menu: Vec<Choice> = resolutions
         .iter()
@@ -105,13 +128,14 @@ pub fn build(info: &VideoInfo) -> Vec<Choice> {
                 .copied()
                 .filter(|f| f.resolution() == Some(lines))
                 .collect();
-            best_video(&at_this_size).map(|video| Choice::Video(video_choice(video, audio)))
+            best_video(&at_this_size)
+                .map(|video| Choice::Video(video_choice(video, audio, info.duration)))
         })
         .collect();
     if menu.is_empty()
         && let Some(video) = best_video(&videos)
     {
-        menu.push(Choice::Video(video_choice(video, audio)));
+        menu.push(Choice::Video(video_choice(video, audio, info.duration)));
     }
 
     if audio.is_some() || formats.iter().any(|f| f.has_audio()) {
@@ -119,16 +143,28 @@ pub fn build(info: &VideoInfo) -> Vec<Choice> {
             bytes: (seconds * (MP3_KBPS * 1000 / 8) as f64) as u64,
             approximate: true,
         });
-        menu.push(Choice::AudioMp3 { size });
+        let source = match menu.first() {
+            Some(Choice::Video(top)) if top.audio.is_none() => top.video.clone(),
+            _ => BEST_SOUND.to_string(),
+        };
+        menu.push(Choice::AudioMp3 { size, source });
     }
     menu
 }
 
-fn video_choice(video: &Format, audio: Option<&Format>) -> VideoChoice {
+fn video_choice(video: &Format, audio: Option<&Format>, duration: Option<f64>) -> VideoChoice {
     let audio = audio.filter(|_| !video.has_audio());
     let size = match audio {
-        Some(audio) => video.size().zip(audio.size()).map(|(v, a)| v + a),
-        None => video.size(),
+        Some(audio) => video
+            .size(duration)
+            .zip(audio.size(duration))
+            .map(|(v, a)| v + a),
+        None => video.size(duration),
+    };
+    let in_mp4 = |f: &Format| matches!(f.ext.as_deref(), Some("mp4" | "m4a" | "m4v"));
+    let merge_into = match audio {
+        Some(audio) if in_mp4(video) && in_mp4(audio) => "mp4",
+        _ => "mp4/mkv",
     };
     VideoChoice {
         resolution: video.resolution(),
@@ -136,6 +172,7 @@ fn video_choice(video: &Format, audio: Option<&Format>) -> VideoChoice {
         video: video.format_id.clone(),
         audio: audio.map(|a| a.format_id.clone()),
         size,
+        merge_into,
     }
 }
 

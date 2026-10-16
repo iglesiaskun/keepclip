@@ -12,10 +12,13 @@ use std::fmt;
 pub struct VideoInfo {
     #[serde(deserialize_with = "text")]
     pub id: String,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "words")]
     pub title: Option<String>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "words")]
     pub uploader: Option<String>,
+    /// The account or channel; some sites give it where `uploader` is empty.
+    #[serde(default, deserialize_with = "words")]
+    pub channel: Option<String>,
     /// Length in seconds.
     #[serde(default, deserialize_with = "number")]
     pub duration: Option<f64>,
@@ -57,6 +60,9 @@ pub struct Format {
     /// Size in bytes estimated from the bitrate and the length.
     #[serde(default, deserialize_with = "whole")]
     pub filesize_approx: Option<u64>,
+    /// Average bitrate, video and sound together, in kilobits per second.
+    #[serde(default, deserialize_with = "number")]
+    pub tbr: Option<f64>,
     #[serde(default)]
     pub format_note: Option<String>,
 }
@@ -87,6 +93,12 @@ impl VideoInfo {
     /// The videos of a playlist that can be downloaded.
     pub fn videos(&self) -> impl Iterator<Item = &VideoInfo> {
         self.entries.iter().flatten()
+    }
+
+    /// Who posted the video: the uploader, or the channel when the site
+    /// leaves the uploader empty.
+    pub fn author(&self) -> Option<&str> {
+        self.uploader.as_deref().or(self.channel.as_deref())
     }
 }
 
@@ -131,18 +143,24 @@ impl Format {
         codec_starts_with(self.acodec.as_deref(), &["mp4a", "aac"])
     }
 
-    /// The size, exact when the site gives it, estimated otherwise.
-    pub fn size(&self) -> Option<Size> {
-        match (self.filesize, self.filesize_approx) {
-            (Some(bytes), _) => Some(Size {
+    /// The size, exact when the site gives it, estimated otherwise: by the
+    /// site, or from the bitrate and the length (`duration`, in seconds).
+    pub fn size(&self, duration: Option<f64>) -> Option<Size> {
+        let estimate = || {
+            self.filesize_approx.or_else(|| {
+                let bytes_per_second = self.tbr? * 1000.0 / 8.0;
+                Some((bytes_per_second * duration?) as u64)
+            })
+        };
+        match self.filesize {
+            Some(bytes) => Some(Size {
                 bytes,
                 approximate: false,
             }),
-            (None, Some(bytes)) => Some(Size {
+            None => estimate().map(|bytes| Size {
                 bytes,
                 approximate: true,
             }),
-            (None, None) => None,
         }
     }
 }
@@ -183,6 +201,14 @@ fn text<'de, D: Deserializer<'de>>(d: D) -> Result<String, D::Error> {
             "expected text, found {other}"
         ))),
     }
+}
+
+/// Text that is empty or only spaces counts as missing.
+fn words<'de, D: Deserializer<'de>>(d: D) -> Result<Option<String>, D::Error> {
+    Ok(match Option::<serde_json::Value>::deserialize(d)? {
+        Some(serde_json::Value::String(s)) if !s.trim().is_empty() => Some(s),
+        _ => None,
+    })
 }
 
 fn number<'de, D: Deserializer<'de>>(d: D) -> Result<Option<f64>, D::Error> {
