@@ -70,7 +70,8 @@ verificação tem mais de 7 dias.
 ### Desinstalar
 
 Apague o `keepclip.exe` e depois as pastas `%APPDATA%\keepclip`
-(configurações) e `%LOCALAPPDATA%\keepclip` (os programas baixados). Para
+(configurações) e `%LOCALAPPDATA%\keepclip` (os programas baixados), e
+`%TEMP%\keepclip` se existir (pedaços de downloads que não terminaram). Para
 tirar o nome que o keepclip registra para as notificações, apague a chave do
 registro `HKEY_CURRENT_USER\Software\Classes\AppUserModelId\keepclip`. Seus
 vídeos ficam na pasta de downloads.
@@ -107,8 +108,13 @@ duração; "size unknown" quer dizer que o site não deu nenhum dos dois.
 **Os nomes dos arquivos** seguem `<quem postou> - <título> [<id do vídeo>].<ext>`,
 com o canal quando o site deixa vazio quem postou, os caracteres que o
 Windows não aceita trocados e um corte em 120 caracteres. Os títulos vêm como
-o site dá, com emoji e hashtags. Um vídeo que já está na pasta não é baixado
-de novo.
+o site dá, com emoji e hashtags.
+
+**Arquivos que já estão na pasta.** Um vídeo cujo arquivo já está lá não é
+baixado de novo, nem em outra resolução, porque o nome é o mesmo: mova ou
+renomeie o antigo antes. Um MP3 baixado de novo substitui o antigo. Pedaços
+de um download que parou no meio ficam em `%TEMP%\keepclip`, e o yt-dlp os
+aproveita quando você baixa a mesma opção de novo.
 
 **Um link com vários vídeos**, como um post com mais de um, mostra antes a
 lista deles (até 20) e baixa o que você escolher.

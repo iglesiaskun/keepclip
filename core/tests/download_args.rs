@@ -72,15 +72,62 @@ fn a_video_joins_the_two_formats_into_mp4_or_mkv() {
         url: "https://v.example/1",
         choice: &choice,
         folder: Path::new("D:\\Videos"),
+        work_folder: Path::new("C:\\Temp\\keepclip"),
         playlist_item: None,
     };
     let args = text(download::download_args(&request, &tools()));
     assert_eq!(value(&args, "-f"), Some("299+140"));
     assert_eq!(value(&args, "--merge-output-format"), Some("mp4/mkv"));
-    assert_eq!(value(&args, "-P"), Some("D:\\Videos"));
     assert!(!args.contains(&"-x".to_string()));
     assert_eq!(value(&args, "--playlist-items"), None);
     assert_eq!(&args[args.len() - 2..], ["--", "https://v.example/1"]);
+}
+
+/// The `-P` paths: where the finished file goes, then where the parts go.
+fn paths(choice: &Choice) -> Vec<String> {
+    let request = Request {
+        url: "https://v.example/1",
+        choice,
+        folder: Path::new("D:\\Videos"),
+        work_folder: Path::new("C:\\Temp\\keepclip"),
+        playlist_item: None,
+    };
+    let args = text(download::download_args(&request, &tools()));
+    args.iter()
+        .zip(args.iter().skip(1))
+        .filter(|(option, _)| *option == "-P")
+        .map(|(_, path)| path.clone())
+        .collect()
+}
+
+#[test]
+fn a_video_is_made_in_the_work_folder_and_finished_in_the_folder() {
+    assert_eq!(
+        paths(&video_1080()),
+        ["home:D:\\Videos", "temp:C:\\Temp\\keepclip"]
+    );
+}
+
+#[test]
+fn an_mp3_is_finished_in_the_work_folder_for_the_app_to_move() {
+    // Made in the download folder, an MP3 from a video already there would
+    // take that video as its download and delete it.
+    let mp3 = Choice::AudioMp3 {
+        size: None,
+        source: "video-with-sound".to_string(),
+    };
+    assert_eq!(
+        paths(&mp3),
+        ["home:C:\\Temp\\keepclip", "temp:C:\\Temp\\keepclip"]
+    );
+    let request = Request {
+        url: "https://v.example/1",
+        choice: &mp3,
+        folder: Path::new("D:\\Videos"),
+        work_folder: Path::new("C:\\Temp\\keepclip"),
+        playlist_item: None,
+    };
+    assert_eq!(request.finished_in(), Path::new("C:\\Temp\\keepclip"));
 }
 
 #[test]
@@ -90,6 +137,7 @@ fn files_are_named_after_the_uploader_title_and_id() {
         url: "https://v.example/1",
         choice: &choice,
         folder: Path::new("D:\\Videos"),
+        work_folder: Path::new("C:\\Temp\\keepclip"),
         playlist_item: None,
     };
     let args = text(download::download_args(&request, &tools()));
@@ -109,6 +157,7 @@ fn progress_comes_one_line_at_a_time_in_keepclip_templates() {
         url: "https://v.example/1",
         choice: &choice,
         folder: Path::new("D:\\Videos"),
+        work_folder: Path::new("C:\\Temp\\keepclip"),
         playlist_item: None,
     };
     let args = text(download::download_args(&request, &tools()));
@@ -139,6 +188,7 @@ fn audio_only_converts_its_source_to_mp3() {
             url: "https://v.example/1",
             choice: &choice,
             folder: Path::new("D:\\Music"),
+            work_folder: Path::new("C:\\Temp\\keepclip"),
             playlist_item: None,
         };
         let args = text(download::download_args(&request, &tools()));
@@ -157,6 +207,7 @@ fn a_video_of_a_playlist_names_its_position() {
         url: "https://v.example/post/1",
         choice: &choice,
         folder: Path::new("D:\\Videos"),
+        work_folder: Path::new("C:\\Temp\\keepclip"),
         playlist_item: Some(3),
     };
     let args = text(download::download_args(&request, &tools()));

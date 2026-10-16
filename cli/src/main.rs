@@ -158,17 +158,45 @@ fn run(args: &Args) -> Result<Finish> {
     std::fs::create_dir_all(&folder)
         .map_err(|e| format!("Could not create the folder {}: {e}", folder.display()))?;
     println!("\nSaving to {}", folder.display());
+    // Parts of an interrupted download stay here, and yt-dlp resumes them
+    // when the same choice is downloaded again.
+    let work_folder = std::env::temp_dir().join("keepclip");
     let request = Request {
         url: &url,
         choice,
         folder: &folder,
+        work_folder: &work_folder,
         playlist_item,
     };
-    let saved = download(&ytdlp, &request)?;
-    let saved = Path::new(&saved);
+    let mut saved = PathBuf::from(download(&ytdlp, &request)?);
+    if request.finished_in() != folder.as_path() {
+        saved = move_into(&saved, &folder)?;
+    }
     println!("\nSaved: {}", saved.display());
-    let notified = notify::saved(saved);
+    let notified = notify::saved(&saved);
     Ok(Finish::Saved { notified })
+}
+
+/// Moves a finished file into `folder`, replacing a file with the same name:
+/// the same choice of the same video, downloaded again.
+fn move_into(file: &Path, folder: &Path) -> Result<PathBuf> {
+    let name = file
+        .file_name()
+        .ok_or("yt-dlp gave a path without a file name.")?;
+    let target = folder.join(name);
+    let fail = |e: std::io::Error| {
+        format!(
+            "Could not move {} to {}: {e}",
+            file.display(),
+            folder.display()
+        )
+    };
+    // Across drives a rename fails; copying and deleting does the same.
+    if std::fs::rename(file, &target).is_err() {
+        std::fs::copy(file, &target).map_err(fail)?;
+        std::fs::remove_file(file).map_err(fail)?;
+    }
+    Ok(target)
 }
 
 /// The link from the command line, the clipboard or the keyboard.

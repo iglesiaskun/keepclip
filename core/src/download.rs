@@ -35,8 +35,25 @@ pub struct Request<'a> {
     pub url: &'a str,
     pub choice: &'a Choice,
     pub folder: &'a Path,
+    /// Where yt-dlp keeps the parts until the file is done, and where it
+    /// makes MP3s (see [`Request::finished_in`]).
+    pub work_folder: &'a Path,
     /// Position of the chosen video in a playlist, counting from 1.
     pub playlist_item: Option<u64>,
+}
+
+impl Request<'_> {
+    /// Where yt-dlp leaves the finished file. A video goes straight to
+    /// `folder`. An MP3 stays in the work folder, and the app moves it: made
+    /// from a video, it would start as a file with the same name as that
+    /// video, and yt-dlp, finding the video in `folder`, would take it as
+    /// already downloaded and delete it after the conversion.
+    pub fn finished_in(&self) -> &Path {
+        match self.choice {
+            Choice::Video(_) => self.folder,
+            Choice::AudioMp3 { .. } => self.work_folder,
+        }
+    }
 }
 
 /// Arguments for `yt-dlp -J`, which prints what the link offers as JSON.
@@ -94,8 +111,11 @@ pub fn download_args(request: &Request<'_>, tools: &Tools) -> Vec<OsString> {
         push("--playlist-items");
         push(&item.to_string());
     }
-    args.push(OsString::from("-P"));
-    args.push(request.folder.as_os_str().to_owned());
+    let mut home = OsString::from("home:");
+    home.push(request.finished_in());
+    let mut work = OsString::from("temp:");
+    work.push(request.work_folder);
+    args.extend([OsString::from("-P"), home, OsString::from("-P"), work]);
     args.push(OsString::from("--"));
     args.push(OsString::from(request.url));
     args

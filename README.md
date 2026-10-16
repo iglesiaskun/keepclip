@@ -70,7 +70,8 @@ than 7 days old.
 ### Uninstall
 
 Delete `keepclip.exe`, then the folders `%APPDATA%\keepclip` (settings) and
-`%LOCALAPPDATA%\keepclip` (the downloaded programs). To remove the name
+`%LOCALAPPDATA%\keepclip` (the downloaded programs), and `%TEMP%\keepclip`
+if it is there (parts of unfinished downloads). To remove the name
 keepclip registers for its notifications, delete the registry key
 `HKEY_CURRENT_USER\Software\Classes\AppUserModelId\keepclip`. Your videos stay
 in the download folder.
@@ -107,8 +108,13 @@ length; "size unknown" means the site gave neither.
 **File names** follow `<uploader> - <title> [<video id>].<ext>`, with the
 channel when the site leaves the uploader empty, characters Windows does not
 allow replaced, and a cut at 120 characters. Titles come as the site gives
-them, emoji and hashtags included. A video that is already in the folder is
-not downloaded again.
+them, emoji and hashtags included.
+
+**Files already in the folder.** A video whose file is already there is not
+downloaded again, even at another resolution, since the name is the same:
+move or rename the old one first. An MP3 downloaded again replaces the old
+one. Parts of a download that stopped halfway stay in `%TEMP%\keepclip`, and
+yt-dlp picks them up when you download the same choice again.
 
 **A link with several videos**, such as a post with more than one, shows a
 list of them first (up to 20) and downloads the one you pick.
