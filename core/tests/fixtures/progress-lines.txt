@@ -1,0 +1,12 @@
+keepclip-progress downloading 1024 4323893 NA NA NA 160
+keepclip-progress downloading 3072 4323893 NA NA NA 160
+keepclip-progress downloading 7168 4323893 NA 3583405.3721096544 1 160
+keepclip-progress downloading 2162688 4323893 NA 10575376.185544083 0 160
+keepclip-progress finished 4323893 4323893 NA 12204585.878555238 NA 160
+keepclip-progress downloading 1024 NA 3871021 NA NA 139
+keepclip-progress finished 3871021 3871021 NA 6261531.509040831 NA 139
+keepclip-postprocess started Merger
+keepclip-postprocess finished Merger
+keepclip-postprocess started MoveFiles
+keepclip-postprocess finished MoveFiles
+keepclip-file C:\Downloads\Sample channel - Sample video [sample1].mp4

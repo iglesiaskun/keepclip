@@ -1,0 +1,26 @@
+{
+ "id": "sample3",
+ "title": "Sample post",
+ "_type": "playlist",
+ "entries": [
+  {
+   "id": "sample31",
+   "title": "Sample post 1",
+   "duration": 10,
+   "playlist_index": 1,
+   "formats": [
+    {"format_id": "mp4-720", "ext": "mp4", "vcodec": "avc1", "acodec": "mp4a", "width": 1280, "height": 720, "filesize": 2000000}
+   ]
+  },
+  null,
+  {
+   "id": "sample33",
+   "title": "Sample post 3",
+   "duration": 20,
+   "playlist_index": 3,
+   "formats": [
+    {"format_id": "mp4-480", "ext": "mp4", "vcodec": "avc1", "acodec": "mp4a", "width": 854, "height": 480, "filesize": 1500000}
+   ]
+  }
+ ]
+}

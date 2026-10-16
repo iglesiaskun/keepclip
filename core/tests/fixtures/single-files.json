@@ -1,0 +1,13 @@
+{
+ "id": "sample2",
+ "title": "Sample clip #tag #another 🎬✨",
+ "uploader": "Sample creator",
+ "duration": 15.4,
+ "formats": [
+  {"format_id": "low", "ext": "mp4", "vcodec": "h264", "acodec": "aac", "width": 540, "height": 960, "filesize": 1048576},
+  {"format_id": "high-hevc", "ext": "mp4", "vcodec": "h265", "acodec": "aac", "width": 1080, "height": 1920, "filesize": 2097152},
+  {"format_id": "high", "ext": "mp4", "vcodec": "h264", "acodec": "aac", "width": 1080, "height": 1920, "filesize_approx": 3145728.6},
+  {"format_id": "plain", "ext": "mp4", "vcodec": "h264", "acodec": "aac", "width": 576, "height": 1024},
+  {"format_id": "dash-video-1080", "ext": "mp4", "vcodec": "avc1.640028", "acodec": "none", "width": 1080, "height": 1920, "filesize": 9999999}
+ ]
+}

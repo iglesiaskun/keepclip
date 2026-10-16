@@ -1,0 +1,10 @@
+{
+ "id": "sample4",
+ "title": "Sample track",
+ "uploader": "Sample artist",
+ "duration": 200,
+ "formats": [
+  {"format_id": "http_mp3_128", "ext": "mp3", "vcodec": "none", "acodec": "mp3", "filesize": 3200000},
+  {"format_id": "hls_opus_64", "ext": "opus", "vcodec": "none", "acodec": "opus", "protocol": "m3u8_native"}
+ ]
+}

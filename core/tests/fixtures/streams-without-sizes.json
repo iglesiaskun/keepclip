@@ -1,0 +1,10 @@
+{
+ "id": 1234567890123,
+ "title": "Sample stream",
+ "formats": [
+  {"format_id": "hls-audio-64000", "ext": "mp4", "vcodec": "none", "acodec": "mp4a.40.2", "protocol": "m3u8_native"},
+  {"format_id": "hls-480", "ext": "mp4", "vcodec": "avc1.4d001e", "acodec": "none", "width": 480, "height": 852, "tbr": 950.5, "protocol": "m3u8_native"},
+  {"format_id": "hls-720", "ext": "mp4", "vcodec": "avc1.640020", "acodec": "none", "width": 720, "height": 1280, "filesize_approx": 5000000, "protocol": "m3u8_native"},
+  {"format_id": "hls-1080", "ext": "mp4", "vcodec": "avc1.640028", "acodec": "none", "width": 1080, "height": 1920, "protocol": "m3u8_native"}
+ ]
+}
