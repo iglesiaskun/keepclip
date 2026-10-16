@@ -1,0 +1,49 @@
+name: Bug report
+description: Something in keepclip does not work as it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this! Please search the open issues first: it may be there already.
+        Security problems go through a private report instead, as explained in SECURITY.md.
+        If one site stopped working, the yt-dlp issues may already have it: keepclip uses yt-dlp to download.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+      placeholder: |
+        1. Copied the link of a video
+        2. Ran keepclip --clipboard and picked 720p
+        Expected: ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: keepclip version
+      description: The first line keepclip prints ("keepclip 0.1.0").
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: site
+    attributes:
+      label: Site
+      description: The site of the link. Paste the link itself only if the video is public and you are fine with sharing it.
+      placeholder: video.example
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      description: Press Win+R, type winver and press Enter.
+      placeholder: Windows 11 24H2 (build 26100)
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: What keepclip printed
+      description: Copy the text of the console window. Remove anything you would rather not share, such as folder names.
+      render: text

@@ -1,0 +1,10 @@
+# Cargo output
+/target/
+
+# rustfmt backups
+**/*.rs.bk
+
+# Editors
+.vscode/
+.idea/
+*.swp
