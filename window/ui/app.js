@@ -14,7 +14,7 @@ const esc = (text) => String(text ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&am
 const ICONS = [
   'chevron-left', 'chevron-right', 'circle-alert', 'circle-check', 'clipboard-paste', 'clock', 'copy',
   'download', 'file-video', 'film', 'folder', 'folder-open', 'history', 'image', 'info', 'link', 'list',
-  'loader-circle', 'minus', 'music', 'play', 'rotate-ccw', 'shield-check', 'user', 'x',
+  'loader-circle', 'minus', 'music', 'play', 'rotate-ccw', 'settings', 'shield-check', 'user', 'x',
 ];
 const icons = new Map();
 
@@ -40,6 +40,8 @@ const COUNT = ['no', 'one', 'two', 'three', 'four'];
 let M = {
   view: 'reading',
   version: '',
+  /** Opened like any app: a copied link fills the field and waits. */
+  askFirst: false,
   folder: null,
   link: null,
   /** Reading: yt-dlp's weekly update comes first. */
@@ -64,6 +66,10 @@ let M = {
   versions: null,
   pasteText: '',
   pasteMsg: '',
+  /** The field holds the copied link, as it was put there. */
+  pasteFilled: false,
+  /** Settings was opened from the paste screen, and Done goes back to it. */
+  settingsBack: false,
 };
 
 /** Thumbnails by "<reading>:<video>": a data: address, or null when none came. */
@@ -94,9 +100,12 @@ function card(i) {
 const linkChip = (link, prefix = '') =>
   `<div class="linkchip" title="${esc(link)}">${ic('link')}<span>${prefix}${esc(link)}</span></div>`;
 
-const footer = (off = false) => M.folder
-  ? `<div class="kf">${ic('folder')}<span class="path" title="${esc(M.folder)}">Saving to <b>${esc(M.folder)}</b></span><button type="button" class="btn subtle sm" data-act="change-folder" ${off ? 'disabled' : ''}>Change</button></div>`
+const footer = (off = false, settings = false) => M.folder
+  ? `<div class="kf">${ic('folder')}<span class="path" title="${esc(M.folder)}">Saving to <b>${esc(M.folder)}</b></span><button type="button" class="btn subtle sm" data-act="change-folder" ${off ? 'disabled' : ''}>Change</button>${settings ? `<button type="button" class="btn subtle icon sm" data-act="settings" aria-label="Settings" title="Settings">${ic('settings')}</button>` : ''}</div>`
   : '';
+
+const PASTE_HINT = 'Copy the link of a video and paste it here.';
+const PASTE_FILLED = 'The link you copied is below. Read it, or paste another.';
 
 const VIEWS = {
   reading() {
@@ -108,9 +117,10 @@ const VIEWS = {
       <div class="center"><span class="reading-ic">${ic('loader-circle', 'spin')}</span><b>${head}</b><p>${text}</p><button type="button" class="btn" data-act="close">Cancel</button></div>${footer()}`;
   },
   paste() {
-    return `<div class="center"><span class="bigic dim">${ic('clipboard-paste')}</span><h2 class="kh">No link in the clipboard</h2><p>Copy the link of a video and paste it here.</p>
+    const head = M.askFirst ? 'Download a video' : 'No link in the clipboard';
+    return `<div class="center"><span class="bigic dim">${ic('clipboard-paste')}</span><h2 class="kh">${head}</h2><p id="pastesub">${M.pasteFilled ? PASTE_FILLED : PASTE_HINT}</p>
       <form class="pasteform" id="pasteform" autocomplete="off"><input class="input mono" id="pasteinput" placeholder="https://" aria-label="Link" spellcheck="false" value="${esc(M.pasteText)}"><button type="submit" class="btn primary">Read link</button></form>
-      <span class="pastemsg" id="pastemsg" role="alert">${esc(M.pasteMsg)}</span></div>${footer()}`;
+      <span class="pastemsg" id="pastemsg" role="alert">${esc(M.pasteMsg)}</span></div>${footer(false, true)}`;
   },
   choose() {
     const v = video();
@@ -144,7 +154,7 @@ const VIEWS = {
     return `${card(M.video)}<div class="done"><span class="bigic ok">${ic('circle-check')}</span><h2 class="kh">Saved</h2>
       <div class="fname">${ic(choice()?.mp3 ? 'music' : 'file-video')}<span>${esc(s.name)}</span></div>
       <div class="infold">in ${esc(s.folder)}</div>
-      <div class="btnrow"><button type="button" class="btn primary" data-act="show-file">${ic('folder-open')}Open folder</button><button type="button" class="btn" data-act="play">${ic('play')}Play</button></div></div>
+      <div class="btnrow"><button type="button" class="btn primary" data-act="show-file">${ic('folder-open')}Open folder</button><button type="button" class="btn" data-act="play">${ic('play')}Play</button><button type="button" class="btn" data-act="another">${ic('download')}Download another</button></div></div>
       <div class="cd" id="cd">${countdownHtml()}</div>`;
   },
   error() {
@@ -199,7 +209,7 @@ const VIEWS = {
     return `<div class="setup"><h2 class="kh">Settings</h2>
       <section class="sec"><h3 class="sec-t">Save downloads in</h3><div class="folderrow"><div class="input ro" title="${esc(folder)}">${ic('folder')}<span>${esc(folder)}</span></div><button type="button" class="btn" data-act="settings-change">Change…</button><button type="button" class="btn icon" data-act="open-folder" aria-label="Open the folder" title="Open the folder" ${M.folder ? '' : 'disabled'}>${ic('folder-open')}</button></div></section>
       ${programs}</div>
-      <div class="kfoot"><span class="ver">keepclip ${esc(M.version)}</span><button type="button" class="btn primary" data-act="close">Done</button></div>`;
+      <div class="kfoot"><span class="ver">keepclip ${esc(M.version)}</span><button type="button" class="btn primary" data-act="settings-done">Done</button></div>`;
   },
 };
 
@@ -288,16 +298,36 @@ async function read(url) {
   }
 }
 
-function showPaste(message = '', text = '') {
-  M = { ...M, view: 'paste', pasteMsg: message, pasteText: text, data: null };
+function showPaste(message = '', text = '', filled = false) {
+  M = { ...M, view: 'paste', pasteMsg: message, pasteText: text, pasteFilled: filled, data: null };
   render();
   $('pasteinput')?.focus();
+  if (M.askFirst && !text) fillFromClipboard();
+}
+
+/** Opened like any app: the copied link goes in the field, without reading
+ * it. What the user typed stays; a link put there before gives way. */
+async function fillFromClipboard() {
+  const url = await invoke('clipboard_link');
+  const input = $('pasteinput');
+  if (!url || M.view !== 'paste' || !input || input.value === url) return;
+  if (input.value.trim() && !M.pasteFilled) return;
+  M = { ...M, pasteText: url, pasteFilled: true, pasteMsg: '' };
+  render();
+  $('pasteinput').focus();
+  $('pasteinput').select();
 }
 
 function wirePaste() {
   const form = $('pasteform');
   const input = $('pasteinput');
-  input.addEventListener('input', () => { M.pasteText = input.value; });
+  input.addEventListener('input', () => {
+    M.pasteText = input.value;
+    if (M.pasteFilled) {
+      M.pasteFilled = false;
+      $('pastesub').textContent = PASTE_HINT;
+    }
+  });
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const url = await invoke('find_link', { text: input.value });
@@ -583,14 +613,29 @@ function installOverall() {
 
 /* ---------- Settings ---------- */
 
-async function showSettings() {
-  M = { ...M, view: 'settings', settings: await invoke('settings_view'), versions: null };
+async function showSettings(back = false) {
+  M = { ...M, view: 'settings', settings: await invoke('settings_view'), versions: null, settingsBack: back };
   render();
   // The versions take a moment: the screen shows "…" until they come.
   invoke('versions').catch(() => []).then((versions) => {
     M.versions = versions;
     if (M.view === 'settings') render();
   });
+}
+
+/** Done in Settings: back to the paste screen it came from, or closes. */
+function leaveSettings() {
+  if (M.settingsBack) showPaste(M.pasteMsg, M.pasteText, M.pasteFilled);
+  else invoke('close');
+}
+
+/** From the Saved screen: stays open for the next link, which waits to be
+ * read, as when keepclip is opened by itself. */
+function another() {
+  clearInterval(countdown?.timer);
+  countdown = null;
+  M.askFirst = true;
+  showPaste();
 }
 
 /* ---------- Actions ---------- */
@@ -630,6 +675,9 @@ const ACTIONS = {
   back: () => { M = { ...M, view: 'multi' }; render(); },
   'change-folder': changeFolder,
   'settings-change': changeFolder,
+  settings: () => showSettings(true),
+  'settings-done': leaveSettings,
+  another,
   'open-folder': () => invoke('open_folder').catch((e) => toast(String(e))),
   'replace-yes': () => answerReplace(true),
   'replace-no': () => answerReplace(false),
@@ -658,7 +706,7 @@ const ACTIONS = {
 document.addEventListener('click', (e) => {
   const el = e.target.closest('[data-act]');
   // A click on the Saved screen keeps the window open.
-  if (M.view === 'saved' && countdown && !countdown.kept && !(el && ['show-file', 'play', 'close', 'min'].includes(el.dataset.act))) {
+  if (M.view === 'saved' && countdown && !countdown.kept && !(el && ['show-file', 'play', 'another', 'close', 'min'].includes(el.dataset.act))) {
     countdown.kept = true;
     updateCountdown();
   }
@@ -689,7 +737,12 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { e.preventDefault(); answerReplace(false); }
     return;
   }
-  if (e.key === 'Escape') { e.preventDefault(); invoke('close'); return; }
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    if (M.view === 'settings') leaveSettings();
+    else invoke('close');
+    return;
+  }
   if (typing() || e.ctrlKey || e.altKey || e.metaKey || !/^[1-9]$/.test(e.key)) return;
   const i = Number(e.key) - 1;
   if (M.view === 'choose') { e.preventDefault(); pick(i); }
@@ -705,8 +758,13 @@ for (const type of ['mousedown', 'mouseup', 'auxclick']) {
 
 window.addEventListener('focus', async () => {
   document.body.classList.remove('inactive');
-  // A link copied after keepclip opened: read it.
   if (M.view !== 'paste') return;
+  // Opened like any app, a link copied since goes in the field.
+  if (M.askFirst) {
+    fillFromClipboard();
+    return;
+  }
+  // Opened for the link in the clipboard, a link copied since is read.
   const url = await invoke('clipboard_link');
   if (url && M.view === 'paste') read(url);
 });
@@ -739,6 +797,7 @@ async function start() {
   M.version = s.version;
   M.folder = s.folder;
   M.link = s.link;
+  M.askFirst = s.askFirst;
   if (s.screen === 'settings') await showSettings();
   else if (s.screen === 'setup') await showSetup();
   else if (s.screen === 'read') {

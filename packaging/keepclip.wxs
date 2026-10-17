@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Windows Installer package (.msi) for keepclip, built by package.ps1 with
+  WiX Toolset 5.
+
+  It installs for the current user only, so it never asks for administrator
+  rights: the files go to %LOCALAPPDATA%\Programs\keepclip, a shortcut to the
+  Start menu, and the folder to the user's PATH, so keepclip-cli works in a
+  terminal. A running keepclip is closed before the files change.
+
+  yt-dlp, ffmpeg and Deno are not in the package: keepclip downloads them on
+  the first run, to %LOCALAPPDATA%\keepclip. Uninstalling deletes that
+  folder and the unfinished downloads in %TEMP%\keepclip; an update keeps
+  them. The settings file in %APPDATA%\keepclip stays, for a later install.
+
+  Variables that package.ps1 passes with -d:
+    Version   the package version, from Cargo.toml
+    BinDir    the folder with keepclip.exe and keepclip-cli.exe
+    Icon      the app icon made by window/build.rs
+    Notices   THIRD-PARTY-NOTICES.html
+    RepoUrl   the project page, linked from Settings > Apps
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+  <!-- The UpgradeCode ties all versions together, so a new version replaces
+       the installed one. It must never change. -->
+  <Package Name="keepclip"
+           Manufacturer="keepclip"
+           Version="$(var.Version)"
+           UpgradeCode="DF6C3D24-D59B-4436-B6D2-7DBAE64E22A8"
+           Scope="perUser"
+           Language="1033">
+    <MajorUpgrade DowngradeErrorMessage="A newer version of keepclip is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <!-- Settings > Apps: icon, links, and no "Modify" button. -->
+    <Icon Id="keepclip.ico" SourceFile="$(var.Icon)" />
+    <Property Id="ARPPRODUCTICON" Value="keepclip.ico" />
+    <Property Id="ARPURLINFOABOUT" Value="$(var.RepoUrl)" />
+    <Property Id="ARPHELPLINK" Value="$(var.RepoUrl)/issues" />
+    <Property Id="ARPNOMODIFY" Value="1" />
+
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="LocalPrograms" Name="Programs">
+        <Directory Id="INSTALLFOLDER" Name="keepclip" />
+      </Directory>
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder" />
+
+    <!-- Files in the user profile need a registry value under HKCU as their
+         key path, and their folders need RemoveFolder: Windows Installer
+         rules for per-user packages. Components like that cannot get an
+         automatic GUID, so they have fixed ones, which must never change.
+         ICE91 warns that these files would not follow a per-machine install;
+         this package is per-user only, so that is expected. -->
+    <ComponentGroup Id="Files" Directory="INSTALLFOLDER">
+      <Component Id="Window" Guid="63246A14-B4DE-4A96-88D3-8C7A03383D91">
+        <File Id="KeepclipExe" Source="$(var.BinDir)\keepclip.exe" />
+        <Shortcut Id="KeepclipShortcut" Directory="ProgramMenuFolder" Name="keepclip"
+                  Description="Download a video from its link"
+                  Target="[#KeepclipExe]" WorkingDirectory="INSTALLFOLDER" />
+        <RegistryValue Root="HKCU" Key="Software\keepclip\Installer" Name="Window"
+                       Type="integer" Value="1" KeyPath="yes" />
+        <RemoveFolder Id="RemoveInstallFolder" On="uninstall" />
+        <RemoveFolder Id="RemoveLocalPrograms" Directory="LocalPrograms" On="uninstall" />
+      </Component>
+      <Component Id="Console" Guid="CB142CBF-EF99-42B1-B91C-90A2AC682174">
+        <File Id="KeepclipCliExe" Source="$(var.BinDir)\keepclip-cli.exe" />
+        <RegistryValue Root="HKCU" Key="Software\keepclip\Installer" Name="Console"
+                       Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+      <Component Id="Licenses" Guid="DDF455E3-7FE7-4769-A8C9-046D5075DF45">
+        <File Id="LicenseMit" Source="LICENSE-MIT" />
+        <File Id="LicenseApache" Source="LICENSE-APACHE" />
+        <File Id="LicenseLucide" Source="window\ui\icons\LICENSE-LUCIDE" />
+        <File Id="Notices" Source="$(var.Notices)" />
+        <RegistryValue Root="HKCU" Key="Software\keepclip\Installer" Name="Licenses"
+                       Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+      <!-- The folder at the end of the user's PATH, taken out again on
+           uninstall. Terminals opened afterwards find keepclip-cli. -->
+      <Component Id="Path" Guid="E2C3D0BC-F93A-4CBD-B5AB-B63CAB08E9C4">
+        <Environment Id="PathEntry" Name="PATH" Value="[INSTALLFOLDER]"
+                     Part="last" Action="set" System="no" Permanent="no" />
+        <RegistryValue Root="HKCU" Key="Software\keepclip\Installer" Name="Path"
+                       Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+      <!-- The name keepclip gives itself in the notification center, which
+           it writes when it shows its first notification. -->
+      <Component Id="Notifications" Guid="1F1F8B9E-45F2-4DD3-8D11-14E9EB4A2ED7">
+        <RemoveRegistryKey Root="HKCU" Key="Software\Classes\AppUserModelId\keepclip"
+                           Action="removeOnUninstall" />
+        <RegistryValue Root="HKCU" Key="Software\keepclip\Installer" Name="Notifications"
+                       Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <Feature Id="Main">
+      <ComponentGroupRef Id="Files" />
+    </Feature>
+
+    <!-- Before the files change (update or uninstall): closes the window,
+         which also stops a download going on. It asks the way Windows does
+         when it shuts down (WM_QUERYENDSESSION, then WM_ENDSESSION), which
+         the window ends on. WM_CLOSE would not do: it goes to every
+         top-level window of the program, the hidden one its event loop
+         runs on too, and once that one is gone the program can no longer
+         exit. -->
+    <util:CloseApplication Id="CloseKeepclip" Target="keepclip.exe"
+                           EndSessionMessage="yes" RebootPrompt="no" />
+
+    <!-- On uninstall, but not on an update, which removes the old version
+         first and must keep the programs: deletes what keepclip made as it
+         ran, which the package does not know as its own. That is the
+         downloaded programs and the window's web view data
+         (%LOCALAPPDATA%\keepclip), and the parts of unfinished downloads
+         (%TEMP%\keepclip). It runs last, once keepclip and its web view
+         have closed, so nothing they write on the way out is left behind.
+         cmd.exe comes with Windows, and a folder that is not there is just
+         an error to ignore. -->
+    <SetProperty Id="DeleteData" Sequence="execute" Before="DeleteData"
+                 Value="&quot;[System64Folder]cmd.exe&quot; /c rd /s /q &quot;[LocalAppDataFolder]keepclip&quot;" />
+    <CustomAction Id="DeleteData" BinaryRef="Wix4UtilCA_X64" DllEntry="WixQuietExec"
+                  Execute="deferred" Impersonate="yes" Return="ignore" />
+    <SetProperty Id="DeleteWork" Sequence="execute" Before="DeleteWork"
+                 Value="&quot;[System64Folder]cmd.exe&quot; /c rd /s /q &quot;[TempFolder]keepclip&quot;" />
+    <CustomAction Id="DeleteWork" BinaryRef="Wix4UtilCA_X64" DllEntry="WixQuietExec"
+                  Execute="deferred" Impersonate="yes" Return="ignore" />
+
+    <InstallExecuteSequence>
+      <Custom Action="DeleteData" Before="InstallFinalize"
+              Condition="REMOVE~=&quot;ALL&quot; AND NOT UPGRADINGPRODUCTCODE" />
+      <Custom Action="DeleteWork" After="DeleteData"
+              Condition="REMOVE~=&quot;ALL&quot; AND NOT UPGRADINGPRODUCTCODE" />
+    </InstallExecuteSequence>
+  </Package>
+</Wix>

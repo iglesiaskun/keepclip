@@ -5,8 +5,8 @@
 [Leia em português](README.pt-BR.md)
 
 Save a video from a link you copied, without ad-filled download sites: copy
-the link, start keepclip, pick a quality by its size, and the file lands in
-your download folder. It works with the
+the link, open keepclip from the Start menu, pick a quality by its size, and
+the file lands in your download folder. It works with the
 [sites yt-dlp supports](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md),
 and it closes when it is done: nothing keeps running in the background.
 
@@ -22,24 +22,48 @@ options. What changes in each version is in the [changelog](CHANGELOG.md).
 ## How it works
 
 1. Copy the link of a video.
-2. Start keepclip with `--clipboard`, from a shortcut, a launcher or a mouse
-   action (see [Start from another app](#start-from-another-app)).
-3. keepclip opens in the middle of the screen the mouse is on, asks yt-dlp
-   what the link offers and shows the video, with its thumbnail, and the
-   choices, with the size of each.
+2. Open keepclip from the Start menu. The link you copied is already in its
+   field; or paste one.
+3. Click **Read link**. keepclip asks yt-dlp what the link offers and shows
+   the video, with its thumbnail, and the choices, with the size of each.
 4. Click one, or press its number. keepclip shows the progress, saves the
-   file and offers **Open folder** and **Play**. The window closes by itself
-   five seconds later, unless the mouse is over it.
+   file and offers **Open folder**, **Play** and **Download another**. The
+   window closes by itself five seconds later, unless the mouse is over it.
+
+keepclip can also start from a keyboard shortcut, a launcher or a mouse
+button and read the copied link at once: see
+[Start from another app](#start-from-another-app).
 
 ## Install
 
-There are no ready-made downloads yet: build keepclip from source, as
-explained in [Building from source](#building-from-source). It needs Windows
-10 or 11, 64-bit. The window also needs the WebView2 Runtime, the part of
-Windows that shows web pages inside apps: Windows 11 comes with it, and
-Windows Update has installed it on most Windows 10 computers. Where it is
-missing, `keepclip.exe` says so with the link to download it, for free, and
-`keepclip-cli.exe` works without it.
+Requirements:
+
+- Windows 10 or 11, 64-bit.
+- For the window, the WebView2 Runtime, the part of Windows that shows web
+  pages inside apps. Windows 11 comes with it, and Windows Update has already
+  installed it on most Windows 10 computers. Where it is missing,
+  `keepclip.exe` says so, with the link to download it, for free:
+  <https://developer.microsoft.com/microsoft-edge/webview2/>. The console
+  version, `keepclip-cli.exe`, works without it.
+
+To install:
+
+1. Download the latest version from the
+   [Releases page](https://github.com/iglesiaskun/keepclip/releases/latest):
+   - **`keepclip-<version>-windows-x64.msi`** (recommended) installs keepclip
+     for your user only, without administrator rights, into
+     `%LOCALAPPDATA%\Programs\keepclip`. It adds keepclip to the Start menu
+     and its folder to your PATH, so `keepclip-cli` works in any terminal you
+     open afterwards. To update, run the newer `.msi`; a keepclip that is
+     open closes first.
+   - **`keepclip-<version>-windows-x64.zip`** runs without installing: unzip
+     it anywhere and start `keepclip.exe`.
+2. If Windows shows "Windows protected your PC", click **More info** and then
+   **Run anyway**. The files are not code-signed yet, so SmartScreen warns
+   about any new download from keepclip; the files are built on GitHub from
+   this repository, and you can check them, as explained in
+   [Check a download](#check-a-download).
+3. Open **keepclip** from the Start menu.
 
 ### First run
 
@@ -63,35 +87,61 @@ keepclip itself does not include or distribute any of them. Sites change
 often, so keepclip updates yt-dlp (`yt-dlp -U`) when its last check is more
 than 7 days old.
 
+### Check a download
+
+Each release lists the SHA-256 checksum of its files in `SHA256SUMS`.
+Compare the line for your file with what PowerShell prints for it:
+
+```powershell
+Get-FileHash keepclip-0.1.0-windows-x64.msi
+```
+
+The files also carry a build attestation, which says they were built by this
+repository's release workflow. With the [GitHub CLI](https://cli.github.com):
+
+```powershell
+gh attestation verify keepclip-0.1.0-windows-x64.msi --repo iglesiaskun/keepclip
+```
+
 ### Uninstall
 
-Delete `keepclip.exe` and `keepclip-cli.exe`, then the folders
+**Installed with the `.msi`**: remove keepclip in Settings > Apps >
+Installed apps. That also deletes the programs it downloaded and the
+window's own files (`%LOCALAPPDATA%\keepclip`), the parts of unfinished
+downloads (`%TEMP%\keepclip`) and its folder in your PATH. The settings
+stay in `%APPDATA%\keepclip`, for a later install; delete that folder to
+remove everything.
+
+**From the `.zip`**: delete its folder, then the folders
 `%APPDATA%\keepclip` (settings) and `%LOCALAPPDATA%\keepclip` (the
 downloaded programs and the window's own files), and `%TEMP%\keepclip` if
-it is there (parts of unfinished downloads). To remove the name
-keepclip registers for its notifications, delete the registry key
-`HKEY_CURRENT_USER\Software\Classes\AppUserModelId\keepclip`. Your videos stay
-in the download folder.
+it is there (parts of unfinished downloads). To remove the name keepclip
+registers for its notifications, delete the registry key
+`HKEY_CURRENT_USER\Software\Classes\AppUserModelId\keepclip`.
+
+Either way, your videos stay in the download folder.
 
 ## Using keepclip
 
-```bash
-keepclip --clipboard
-```
+Opened from the Start menu, keepclip shows a field for the link. A link you
+have copied is already in it, and a link copied while keepclip is open goes
+in when you come back to the window, unless you have typed in the field.
+Nothing is read until you click **Read link** or press Enter. The gear next to the folder, at the bottom,
+opens the settings: the download folder and the version of each program.
 
-downloads the link in the clipboard. The other ways to start it:
+From a command line or a shortcut:
 
 | Command | Does |
 |---|---|
-| `keepclip <link>` | downloads that link |
-| `keepclip` | uses the link in the clipboard, or asks you to paste one |
-| `keepclip --choose-folder` | picks the download folder again; in the window, alone, it opens the settings, with the version of each program |
+| `keepclip` | opens with the copied link in the field, ready to read |
+| `keepclip --clipboard` | reads the link in the clipboard at once |
+| `keepclip <link>` | reads that link at once |
+| `keepclip --choose-folder` | picks the download folder again; alone, it opens the settings |
 | `keepclip --dir <folder>` | keeps the settings file in that folder, handy for testing |
 
-`keepclip-cli` takes the same options. In the window, the keys 1 to 9 pick
-a line and Esc closes it. With no link in the clipboard, the window shows a
-field to paste one, and reads the clipboard again when it gets the focus, so
-a link copied after it opened works too.
+`keepclip-cli` takes the same options; without a link it uses the one in the
+clipboard, or asks for one. In the window, the keys 1 to 9 pick a line and
+Esc closes it.
 
 **The choices.** There is one line per resolution, from the highest down,
 and then **Audio only (MP3)**. For each resolution keepclip takes the video
@@ -137,16 +187,19 @@ console always shows it.
 
 ### Start from another app
 
-keepclip is made to be started by something else and close when it is done.
-Any launcher, keyboard shortcut or mouse action that runs a program can start
-it with the link you copied:
+keepclip also works as a quick action: copy a link, press a key or a mouse
+button, pick a quality, done. Any launcher, keyboard shortcut or mouse tool
+that runs a program can start it with the link you copied:
 
 ```
-"C:\path\to\keepclip.exe" --clipboard
+"%LOCALAPPDATA%\Programs\keepclip\keepclip.exe" --clipboard
 ```
 
-The window opens at once, with the focus, so the number keys work without a
-click.
+(With the `.zip`, use the folder you unzipped it to.) The window opens at
+once, in the middle of the screen the mouse is on, already reading the link,
+and with the focus, so the number keys work without a click. When the
+clipboard has no link, it shows the field to paste one, and reads a link
+copied while it waits.
 
 `keepclip-cli.exe --clipboard` does the same in a console. When it has the
 console window to itself, it closes it two seconds after the download; the
@@ -157,7 +210,7 @@ show the notification, the console waits for Enter instead.
 
 The settings file is `%APPDATA%\keepclip\config.toml`. keepclip writes it
 when you pick the download folder (**Change**, at the bottom of the window,
-picks another), and you can edit it:
+or in the settings, picks another), and you can edit it:
 
 ```toml
 version = 1
@@ -180,6 +233,10 @@ version 1.
   but it is not tested there.
 - **Long titles**, such as posts full of hashtags and emoji, make long file
   names, cut at 120 characters.
+- **Not code-signed yet.** Windows SmartScreen and some antivirus programs
+  warn about new programs without a signature and a reputation. Code signing
+  is planned; until then, [Check a download](#check-a-download) shows how to
+  confirm a file came from this repository.
 
 ## Privacy
 
@@ -209,6 +266,12 @@ Then run `target\release\keepclip.exe` (the window) or
 window, in `window/ui`, is plain HTML, CSS and JavaScript: there is no Node,
 npm or other build step.
 
+The release files come from `packaging/package.ps1`, which the release
+workflow runs; the comment at its top explains how to run it locally. It
+needs [WiX Toolset](https://wixtoolset.org) 5 for the `.msi` and
+[cargo-about](https://github.com/EmbarkStudios/cargo-about) for the list of
+third-party licenses.
+
 ## Project layout
 
 ```
@@ -220,6 +283,8 @@ system/   library (keepclip-system): what both programs share: runs yt-dlp,
           the clipboard and the notification
 window/   the window (keepclip.exe), on Tauri 2, with its interface in ui/
 cli/      the console version (keepclip-cli.exe)
+packaging/ the installer (WiX), the portable .zip and the list of
+          third-party licenses, made by package.ps1
 ```
 
 ## Contributing

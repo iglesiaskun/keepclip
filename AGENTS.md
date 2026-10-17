@@ -30,6 +30,10 @@ the ones CI runs, and CI fails on any clippy warning.
   Node, no npm, no build step. `window/build.rs` draws the app icon.
 - `cli/` (`keepclip-cli.exe`): the console version: its questions and its
   progress line.
+- `packaging/`: the release files. `package.ps1` makes the `.msi` from
+  `keepclip.wxs` (WiX 5), the `.zip` and the third-party notices
+  (cargo-about); `.github/workflows/release.yml` runs it for a tag. The
+  `UpgradeCode` and the component GUIDs in `keepclip.wxs` never change.
 
 ## Invariants
 

@@ -22,11 +22,14 @@ use std::time::Duration;
 /// The name the help gives the program.
 const PROGRAM: &str = "keepclip-cli";
 
+/// What the help says it does without a link.
+const WITHOUT_LINK: [&str; 2] = ["without it, the link in the", "clipboard, or one you paste"];
+
 fn main() -> ExitCode {
     let args = match args::parse(std::env::args().skip(1)) {
         Ok(Command::Run(args)) => args,
         Ok(Command::Help) => {
-            print!("{}", args::help(PROGRAM));
+            print!("{}", args::help(PROGRAM, WITHOUT_LINK));
             return ExitCode::SUCCESS;
         }
         Ok(Command::Version) => {
@@ -34,7 +37,7 @@ fn main() -> ExitCode {
             return ExitCode::SUCCESS;
         }
         Err(e) => {
-            eprintln!("{PROGRAM}: {e}\n\n{}", args::help(PROGRAM));
+            eprintln!("{PROGRAM}: {e}\n\n{}", args::help(PROGRAM, WITHOUT_LINK));
             return ExitCode::FAILURE;
         }
     };

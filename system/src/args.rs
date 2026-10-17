@@ -12,6 +12,14 @@ pub struct Args {
     pub dir: Option<PathBuf>,
 }
 
+impl Args {
+    /// Nothing to do was given: keepclip was opened like any app, from the
+    /// Start menu or a shortcut, perhaps with `--dir`.
+    pub fn nothing_given(&self) -> bool {
+        self.link.is_none() && !self.clipboard && !self.choose_folder
+    }
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum Command {
     Run(Args),
@@ -19,15 +27,17 @@ pub enum Command {
     Version,
 }
 
-/// The help, for the program called `program`.
-pub fn help(program: &str) -> String {
+/// The help, for the program called `program`. `without_link` says, in two
+/// short lines, what it does when given no link.
+pub fn help(program: &str, without_link: [&str; 2]) -> String {
+    let [first, second] = without_link;
     format!(
         "\
 Download a video from a copied link.
 
 Usage:
-  {program} [LINK]            downloads LINK; without it, the link in the
-  {pad}                   clipboard, or one you paste
+  {program} [LINK]            downloads LINK; {first}
+  {pad}                   {second}
   {program} --clipboard       downloads the link in the clipboard
   {program} --choose-folder   picks the download folder again
 
@@ -103,8 +113,21 @@ mod tests {
     }
 
     #[test]
+    fn nothing_given_is_opening_the_app() {
+        assert!(run(&[]).unwrap().nothing_given());
+        assert!(run(&["--dir", "C:\\test"]).unwrap().nothing_given());
+        for words in [
+            &["--clipboard"][..],
+            &["--choose-folder"],
+            &["https://example.com/v/1"],
+        ] {
+            assert!(!run(words).unwrap().nothing_given(), "{words:?}");
+        }
+    }
+
+    #[test]
     fn the_help_names_the_program() {
-        let text = help("keepclip-cli");
+        let text = help("keepclip-cli", ["without it, the link in the", "clipboard"]);
         assert!(text.contains("  keepclip-cli --clipboard  "));
         // The second line of a usage lines up with the first.
         let lines: Vec<&str> = text.lines().collect();
