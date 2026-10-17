@@ -1,20 +1,18 @@
 # AGENTS.md
 
-Rules for AI agents working on keepclip. The workflow for every contributor
-is in [CONTRIBUTING.md](CONTRIBUTING.md); what keepclip does and how to build
-it are in [README.md](README.md).
+Guidance for AI coding agents working on keepclip. Everything in
+[CONTRIBUTING.md](CONTRIBUTING.md) applies to agents too: the branch and pull
+request workflow, the checks CI runs, the changelog, fixtures, new
+dependencies and the language of code and commits. What keepclip does and
+how to build it are in [README.md](README.md). This file adds what an agent
+needs on top.
 
 ## Build and check
 
 Stable Rust, no older than `rust-version` in the root `Cargo.toml`; on
-Windows, the `x86_64-pc-windows-msvc` target. Before each commit, run what CI
-runs:
-
-```bash
-cargo fmt --all
-cargo clippy --all-targets --all-features -- -D warnings
-cargo test --all
-```
+Windows, the `x86_64-pc-windows-msvc` target. Before each commit, run the
+three checks in CONTRIBUTING.md ("Before opening a pull request"): they are
+the ones CI runs, and CI fails on any clippy warning.
 
 ## Where code goes
 
@@ -50,34 +48,32 @@ cargo test --all
 - The window loads nothing from the web: its content security policy in
   `window/tauri.conf.json` allows only its own files and `data:` pictures.
   keepclip fetches the thumbnails itself and hands them over as `data:`
-  addresses.
+  addresses. Text that comes from a site goes through `esc()` in
+  `window/ui/app.js` before it becomes HTML.
+- The window's capability (`window/capabilities/default.json`) lists only
+  the Tauri permissions the interface calls. A new call from `app.js` adds
+  its own permission there, never a whole default set.
 - The progress templates and `progress::parse` change together, with the
   fixture in `core/tests/fixtures/progress-lines.txt`.
-- Fixtures from real yt-dlp output have the title, the uploader, the id and
-  every link replaced with sample values: links can carry an IP address.
 - A change that would make an older `config.toml` mean something else raises
   `FORMAT_VERSION` (`core/src/config.rs`) and converts older files in
   `config::parse`, with a test.
 - Generic names only: code, tests, examples and docs name no brand or product
   of another company, and no video site. Describe sites as "the sites yt-dlp
   supports". The exceptions are what building and running need: Windows,
-  GitHub, the build tools, the programs keepclip downloads (yt-dlp, ffmpeg,
-  Deno) and the Lucide credit.
+  WebView2, GitHub, the build tools, the programs keepclip downloads (yt-dlp,
+  ffmpeg, Deno) and the Lucide credit.
 - Icons come only from [Lucide](https://lucide.dev), unmodified, in
   `window/ui/icons/`, next to `LICENSE-LUCIDE`.
 
-## Conventions
+## Editing
 
-- English in code, comments, commit messages and docs. `README.pt-BR.md` is
-  the one Portuguese file.
-- One branch per change (`type/short-description`), small pull requests,
-  squash merged, with the title in the imperative ("Add subtitles").
 - Edit manifests such as `Cargo.toml` with targeted changes. Rewriting the
   whole file loses its comments and fields such as `license`.
-- A new dependency needs a reason, written as a comment above it in
-  `Cargo.toml`, like the others, and in the pull request.
-- A change people will notice updates `CHANGELOG.md` under "Unreleased", and
-  both `README.md` and `README.pt-BR.md`.
+- Comments and docs say what the code does and why. They do not tell how it
+  came to be: that belongs in commit messages and pull requests.
+- `README.pt-BR.md` is the Portuguese translation of `README.md` and the one
+  file not in English. A change to one README goes into both.
 
 ## Left to people
 

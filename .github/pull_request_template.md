@@ -10,7 +10,8 @@
 
 ## Checklist
 
-- [ ] `cargo fmt --all`, `cargo clippy --all-targets -- -D warnings` and `cargo test --all` pass.
+- [ ] `cargo fmt --all`, `cargo clippy --all-targets --all-features -- -D warnings` and `cargo test --all` pass.
+- [ ] Each new dependency has its reason in a comment above it in `Cargo.toml`.
 - [ ] Changes people will notice are in `CHANGELOG.md`, under "Unreleased".
 - [ ] `README.md` and `README.pt-BR.md` are up to date.
 - [ ] New fixtures from real yt-dlp output have sample titles, ids and no links.

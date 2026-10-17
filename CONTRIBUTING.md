@@ -39,6 +39,10 @@ Tests that need what yt-dlp prints use fixtures in `core/tests/fixtures`.
 Real output is welcome, but replace the title, the uploader, the id and every
 link with sample values first: links can carry your IP address.
 
+A new dependency needs a reason, written as a comment above it in
+`Cargo.toml`, like the others, and in the pull request. Its license must allow
+keepclip to stay MIT OR Apache-2.0: no GPL.
+
 Run the same checks CI runs:
 
 ```bash
@@ -46,7 +50,7 @@ cargo fmt --all
 ```
 
 ```bash
-cargo clippy --all-targets -- -D warnings
+cargo clippy --all-targets --all-features -- -D warnings
 ```
 
 ```bash
@@ -55,8 +59,11 @@ cargo test --all
 
 ## Language
 
-Code, comments, commit messages and pull request titles are written in
-English. Issues and discussions may be in English or Portuguese.
+Code, comments, the text keepclip shows, docs, commit messages and pull
+request titles are written in English. The one exception is
+[README.pt-BR.md](README.pt-BR.md), the Portuguese translation of the README:
+a change to one README goes into both. Issues and discussions may be in
+English or Portuguese.
 
 ## License
 

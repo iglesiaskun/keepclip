@@ -23,7 +23,7 @@ body:
     id: version
     attributes:
       label: keepclip version
-      description: The first line keepclip prints ("keepclip 0.1.0").
+      description: What keepclip --version or keepclip-cli --version shows ("keepclip 0.1.0").
       placeholder: "0.1.0"
     validations:
       required: true

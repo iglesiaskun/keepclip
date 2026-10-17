@@ -1,6 +1,6 @@
 /* keepclip: a small window with the video on top, the screen of the moment
-   in the middle and the download folder at the bottom. The colors and fonts
-   are the Thumbring editor's, and follow the Windows light or dark mode. */
+   in the middle and the download folder at the bottom. The colors follow the
+   Windows light or dark mode, and the fonts are the ones Windows uses. */
 
 :root {
   --win: #F3F4F7;
