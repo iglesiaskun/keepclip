@@ -8,3 +8,6 @@
 .vscode/
 .idea/
 *.swp
+
+# Schemas that tauri-build writes on every build of the window
+/window/gen/

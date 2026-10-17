@@ -15,36 +15,33 @@ e fecha quando termina: nada fica rodando em segundo plano.
 > direitos autorais e os termos de cada site. O keepclip é uma ferramenta; o
 > que você faz com ela é com você.
 
-O keepclip está na primeira versão, que roda numa janela de console. O que
-muda em cada versão está no [changelog](CHANGELOG.md) (em inglês).
+O keepclip está na primeira versão. Ele vem como uma janela pequena,
+`keepclip.exe`, e como uma versão de console, `keepclip-cli.exe`, com as
+mesmas opções. O que muda em cada versão está no [changelog](CHANGELOG.md)
+(em inglês).
 
 ## Como funciona
 
 1. Copie o link de um vídeo.
 2. Abra o keepclip com `--clipboard`, por um atalho, um lançador ou uma ação
    do mouse (veja [Abrir por outro app](#abrir-por-outro-app)).
-3. O keepclip pergunta ao yt-dlp o que o link oferece e mostra as opções, com
-   o tamanho de cada uma:
-
-   ```
-   Sample video | Sample channel | 10:35
-
-      1) 1080p 60 fps      255.5 MB
-      2) 720p 60 fps       153.3 MB
-      3) 480p              36.7 MB
-      4) Audio only (MP3)  ~14.5 MB
-
-   Choose (1-4, Enter = 1, 0 = cancel):
-   ```
-
-4. Escolha uma. O keepclip mostra o progresso, salva o arquivo e mostra uma
-   notificação do Windows; clique nela para abrir a pasta.
+3. O keepclip abre no meio da tela onde está o mouse, pergunta ao yt-dlp o
+   que o link oferece e mostra o vídeo, com a miniatura, e as opções, com o
+   tamanho de cada uma.
+4. Clique numa, ou aperte o número dela. O keepclip mostra o progresso, salva
+   o arquivo e oferece **Open folder** (abrir a pasta) e **Play** (tocar). A
+   janela fecha sozinha cinco segundos depois, a menos que o mouse esteja
+   sobre ela.
 
 ## Instalação
 
 Ainda não há downloads prontos: compile o keepclip a partir do código, como
 explica [Compilar a partir do código](#compilar-a-partir-do-código). Ele
-precisa do Windows 10 ou 11, 64 bits.
+precisa do Windows 10 ou 11, 64 bits. A janela precisa também do WebView2
+Runtime, a parte do Windows que mostra páginas web dentro dos apps: o
+Windows 11 já vem com ele, e o Windows Update já o instalou na maioria dos
+computadores com Windows 10. Onde ele falta, o `keepclip.exe` avisa, com o
+link para baixá-lo de graça, e o `keepclip-cli.exe` funciona sem ele.
 
 ### Primeira execução
 
@@ -52,9 +49,9 @@ O keepclip pergunta onde salvar os downloads e guarda a resposta no arquivo
 de configurações.
 
 Depois ele baixa, uma vez só, os programas gratuitos que fazem o trabalho,
-para `%LOCALAPPDATA%\keepclip\bin`. Ele pergunta antes de baixar, pega cada
-um da release oficial no GitHub e confere com o checksum SHA-256 publicado
-junto:
+para `%LOCALAPPDATA%\keepclip\bin`. Ele pergunta antes de baixar (a janela
+pergunta a pasta e os programas numa tela só), pega cada um da release
+oficial no GitHub e confere com o checksum SHA-256 publicado junto:
 
 | Programa | O que faz | De onde vem | Licença |
 |---|---|---|---|
@@ -69,9 +66,10 @@ verificação tem mais de 7 dias.
 
 ### Desinstalar
 
-Apague o `keepclip.exe` e depois as pastas `%APPDATA%\keepclip`
-(configurações) e `%LOCALAPPDATA%\keepclip` (os programas baixados), e
-`%TEMP%\keepclip` se existir (pedaços de downloads que não terminaram). Para
+Apague o `keepclip.exe` e o `keepclip-cli.exe` e depois as pastas
+`%APPDATA%\keepclip` (configurações) e `%LOCALAPPDATA%\keepclip` (os
+programas baixados e os arquivos da própria janela), e `%TEMP%\keepclip` se
+existir (pedaços de downloads que não terminaram). Para
 tirar o nome que o keepclip registra para as notificações, apague a chave do
 registro `HKEY_CURRENT_USER\Software\Classes\AppUserModelId\keepclip`. Seus
 vídeos ficam na pasta de downloads.
@@ -88,8 +86,13 @@ baixa o link da área de transferência. As outras formas de abrir:
 |---|---|
 | `keepclip <link>` | baixa esse link |
 | `keepclip` | usa o link da área de transferência ou pede para colar um |
-| `keepclip --choose-folder` | escolhe de novo a pasta de downloads |
+| `keepclip --choose-folder` | escolhe de novo a pasta de downloads; na janela, sozinho, abre as configurações, com a versão de cada programa |
 | `keepclip --dir <pasta>` | guarda o arquivo de configurações nessa pasta, útil para testes |
+
+O `keepclip-cli` aceita as mesmas opções. Na janela, as teclas 1 a 9
+escolhem uma linha e Esc fecha. Sem link na área de transferência, a janela
+mostra um campo para colar e lê a área de transferência de novo quando ganha
+o foco, então um link copiado depois que ela abriu também funciona.
 
 **As opções.** Há uma linha por resolução, da maior para a menor, e depois
 **Audio only (MP3)** (só o áudio). Em cada resolução o keepclip escolhe o
@@ -113,18 +116,25 @@ o site dá, com emoji e hashtags.
 **Arquivos que já estão na pasta.** Quando a pasta já tem um arquivo com o
 mesmo nome, como o mesmo vídeo em outra resolução ou o MP3 dele de antes, o
 keepclip pergunta antes de baixar se quer substituir. A resposta é não, a
-menos que você digite `y`. Se disser que sim, o arquivo antigo fica como está
-até o novo terminar, então um download que falhe não faz perder nada.
+menos que você escolha **Replace** (no console, digite `y`). Se disser que
+sim, o arquivo antigo fica como está até o novo terminar, então um download
+que falhe não faz perder nada.
 
 O keepclip monta cada arquivo em `%TEMP%\keepclip` e o move para a sua pasta
-quando fica pronto. Pedaços de um download que parou no meio ficam lá, e o
-yt-dlp os aproveita quando você baixa a mesma opção de novo.
+quando fica pronto. Pedaços de um download que parou no meio, com **Cancel**
+ou por um erro, ficam lá, e o yt-dlp os aproveita quando você baixa a mesma
+opção de novo.
 
 **Um link com vários vídeos**, como um post com mais de um, mostra antes a
 lista deles (até 20) e baixa o que você escolher.
 
-**Quando algo dá errado**, o keepclip mostra o motivo que o yt-dlp deu e
-deixa a janela aberta até você apertar Enter.
+**Quando algo dá errado**, o keepclip mostra o motivo que o yt-dlp deu,
+pronto para copiar, com **Try again** (tentar de novo). O console deixa a
+janela aberta até você apertar Enter.
+
+**A notificação.** Quando um download termina com a janela fora da frente, o
+keepclip mostra uma notificação do Windows; clique nela para abrir a pasta. O
+console sempre mostra.
 
 ### Abrir por outro app
 
@@ -136,14 +146,19 @@ programa pode abri-lo com o link copiado:
 "C:\caminho\para\keepclip.exe" --clipboard
 ```
 
-Quando a janela do console é só dele, o keepclip a fecha dois segundos depois
-do download; a notificação fica na central de notificações do Windows. Se o
-Windows não mostrar a notificação, a janela espera um Enter.
+A janela abre na hora, já com o foco, então as teclas dos números funcionam
+sem clicar.
+
+O `keepclip-cli.exe --clipboard` faz o mesmo num console. Quando a janela do
+console é só dele, ele a fecha dois segundos depois do download; a
+notificação fica na central de notificações do Windows. Se o Windows não
+mostrar a notificação, o console espera um Enter.
 
 ## Configuração
 
 O arquivo de configurações é `%APPDATA%\keepclip\config.toml`. O keepclip o
-escreve quando você escolhe a pasta de downloads, e você pode editá-lo:
+escreve quando você escolhe a pasta de downloads (**Change**, na barra de
+baixo da janela, escolhe outra), e você pode editá-lo:
 
 ```toml
 version = 1
@@ -160,7 +175,7 @@ ele conta como versão 1.
 
 - **Sites que pedem login** ainda não funcionam: o keepclip não entra na sua
   conta. Vídeos públicos funcionam.
-- **Só console**, em inglês. Uma janela vem numa versão futura.
+- **Só em inglês.**
 - **Só Windows** por enquanto. A lógica em `core/` não tem código do Windows;
   em outros sistemas o keepclip espera `yt-dlp`, `ffmpeg` e `deno` no PATH,
   mas não foi testado lá.
@@ -170,8 +185,9 @@ ele conta como versão 1.
 ## Privacidade
 
 O keepclip não tem telemetria. Ele se conecta ao GitHub para baixar e
-atualizar os programas e, pelo yt-dlp, aos sites dos links que você der. Nada
-além disso.
+atualizar os programas, pelo yt-dlp aos sites dos links que você der e, para
+a miniatura na janela, ao endereço da imagem que o yt-dlp informa. Nada além
+disso.
 
 ## Compilar a partir do código
 
@@ -189,16 +205,22 @@ cargo test
 cargo build --release
 ```
 
-Depois rode `target\release\keepclip.exe`.
+Depois rode `target\release\keepclip.exe` (a janela) ou
+`target\release\keepclip-cli.exe` (o console). A interface da janela, em
+`window/ui`, é HTML, CSS e JavaScript puros: não há Node, npm nem outra
+etapa de build.
 
 ## Organização do projeto
 
 ```
-core/   biblioteca (keepclip-core): lógica pura e testável, sem código do
-        Windows: lê o que o yt-dlp informa, monta o menu, os argumentos do
-        download e o arquivo de configurações, e acompanha o progresso
-cli/    o programa (keepclip.exe): console, área de transferência,
-        notificação, e o download e a atualização de yt-dlp, ffmpeg e Deno
+core/     biblioteca (keepclip-core): lógica pura e testável, sem código do
+          Windows: lê o que o yt-dlp informa, monta o menu, os argumentos
+          do download e o arquivo de configurações, e acompanha o progresso
+system/   biblioteca (keepclip-system): o que os dois programas dividem:
+          roda o yt-dlp, baixa e atualiza yt-dlp, ffmpeg e Deno, o arquivo
+          de configurações, a área de transferência e a notificação
+window/   a janela (keepclip.exe), em Tauri 2, com a interface em ui/
+cli/      a versão de console (keepclip-cli.exe)
 ```
 
 ## Contribuindo
@@ -217,6 +239,10 @@ Licenciado sob uma das duas, à sua escolha:
 
 Os programas que o keepclip baixa na primeira execução (yt-dlp, ffmpeg, Deno)
 não fazem parte do keepclip e mantêm as próprias licenças.
+
+Os ícones da janela, em [`window/ui/icons`](window/ui/icons), vêm do
+[Lucide](https://lucide.dev) e estão sob a licença ISC
+([LICENSE-LUCIDE](window/ui/icons/LICENSE-LUCIDE)).
 
 ### Contribuição
 

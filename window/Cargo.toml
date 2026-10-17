@@ -1,0 +1,36 @@
+[package]
+# The package name is also the executable name (keepclip.exe).
+name = "keepclip"
+version.workspace = true
+description = "Download a video from a copied link, with yt-dlp doing the work: the window."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[build-dependencies]
+# Compresses the images of the app icon, which build.rs draws.
+miniz_oxide = "0.9"
+# Embeds the interface files, the icon and the version information.
+tauri-build = { version = "2.7", features = [] }
+
+[dependencies]
+keepclip-core.workspace = true
+keepclip-system.workspace = true
+# What the window and its interface send each other, as JSON.
+serde.workspace = true
+# The window: a WebView2 page with the interface in ui/.
+tauri = { version = "2.12", features = [] }
+# The system's own dialog to pick the download folder.
+tauri-plugin-dialog = "2"
+
+# A message box for problems that happen before the window exists, and
+# opening a file or File Explorer with the file selected.
+[target.'cfg(windows)'.dependencies]
+windows = { workspace = true, features = [
+    "Win32_Foundation",
+    "Win32_System_Com",
+    "Win32_UI_Shell",
+    "Win32_UI_Shell_Common",
+    "Win32_UI_WindowsAndMessaging",
+] }

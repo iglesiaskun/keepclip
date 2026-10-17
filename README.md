@@ -15,36 +15,31 @@ and it closes when it is done: nothing keeps running in the background.
 > Respect copyright and the terms of each site. keepclip is a tool; what you
 > do with it is up to you.
 
-keepclip is at its first version, which runs in a console window. What
-changes in each version is in the [changelog](CHANGELOG.md).
+keepclip is at its first version. It comes as a small window,
+`keepclip.exe`, and as a console version, `keepclip-cli.exe`, with the same
+options. What changes in each version is in the [changelog](CHANGELOG.md).
 
 ## How it works
 
 1. Copy the link of a video.
 2. Start keepclip with `--clipboard`, from a shortcut, a launcher or a mouse
    action (see [Start from another app](#start-from-another-app)).
-3. keepclip asks yt-dlp what the link offers and shows the choices, with the
-   size of each:
-
-   ```
-   Sample video | Sample channel | 10:35
-
-      1) 1080p 60 fps      255.5 MB
-      2) 720p 60 fps       153.3 MB
-      3) 480p              36.7 MB
-      4) Audio only (MP3)  ~14.5 MB
-
-   Choose (1-4, Enter = 1, 0 = cancel):
-   ```
-
-4. Pick one. keepclip shows the progress, saves the file and shows a Windows
-   notification; click it to open the folder.
+3. keepclip opens in the middle of the screen the mouse is on, asks yt-dlp
+   what the link offers and shows the video, with its thumbnail, and the
+   choices, with the size of each.
+4. Click one, or press its number. keepclip shows the progress, saves the
+   file and offers **Open folder** and **Play**. The window closes by itself
+   five seconds later, unless the mouse is over it.
 
 ## Install
 
 There are no ready-made downloads yet: build keepclip from source, as
 explained in [Building from source](#building-from-source). It needs Windows
-10 or 11, 64-bit.
+10 or 11, 64-bit. The window also needs the WebView2 Runtime, the part of
+Windows that shows web pages inside apps: Windows 11 comes with it, and
+Windows Update has installed it on most Windows 10 computers. Where it is
+missing, `keepclip.exe` says so with the link to download it, for free, and
+`keepclip-cli.exe` works without it.
 
 ### First run
 
@@ -52,9 +47,10 @@ keepclip asks where to save the downloads and keeps the answer in its
 settings file.
 
 Then it downloads, once, the free programs that do the work, into
-`%LOCALAPPDATA%\keepclip\bin`. It asks before downloading, takes each one
-from its official release on GitHub and checks it against the SHA-256
-checksum published with it:
+`%LOCALAPPDATA%\keepclip\bin`. It asks before downloading (the window asks
+for the folder and the programs on one screen), takes each one from its
+official release on GitHub and checks it against the SHA-256 checksum
+published with it:
 
 | Program | What it does | From | License |
 |---|---|---|---|
@@ -69,9 +65,10 @@ than 7 days old.
 
 ### Uninstall
 
-Delete `keepclip.exe`, then the folders `%APPDATA%\keepclip` (settings) and
-`%LOCALAPPDATA%\keepclip` (the downloaded programs), and `%TEMP%\keepclip`
-if it is there (parts of unfinished downloads). To remove the name
+Delete `keepclip.exe` and `keepclip-cli.exe`, then the folders
+`%APPDATA%\keepclip` (settings) and `%LOCALAPPDATA%\keepclip` (the
+downloaded programs and the window's own files), and `%TEMP%\keepclip` if
+it is there (parts of unfinished downloads). To remove the name
 keepclip registers for its notifications, delete the registry key
 `HKEY_CURRENT_USER\Software\Classes\AppUserModelId\keepclip`. Your videos stay
 in the download folder.
@@ -88,8 +85,13 @@ downloads the link in the clipboard. The other ways to start it:
 |---|---|
 | `keepclip <link>` | downloads that link |
 | `keepclip` | uses the link in the clipboard, or asks you to paste one |
-| `keepclip --choose-folder` | picks the download folder again |
+| `keepclip --choose-folder` | picks the download folder again; in the window, alone, it opens the settings, with the version of each program |
 | `keepclip --dir <folder>` | keeps the settings file in that folder, handy for testing |
+
+`keepclip-cli` takes the same options. In the window, the keys 1 to 9 pick
+a line and Esc closes it. With no link in the clipboard, the window shows a
+field to paste one, and reads the clipboard again when it gets the focus, so
+a link copied after it opened works too.
 
 **The choices.** There is one line per resolution, from the highest down,
 and then **Audio only (MP3)**. For each resolution keepclip takes the video
@@ -113,18 +115,25 @@ them, emoji and hashtags included.
 **Files already in the folder.** When the folder already has a file with the
 same name, such as the same video at another resolution or its MP3 from
 before, keepclip asks before downloading whether to replace it. The answer
-is no unless you type `y`. If you say yes, the old file stays as it is until
-the new one is complete, so a failed download loses nothing.
+is no unless you choose **Replace** (in the console, type `y`). If you say
+yes, the old file stays as it is until the new one is complete, so a failed
+download loses nothing.
 
 keepclip makes each file in `%TEMP%\keepclip` and moves it to your folder
-when it is complete. Parts of a download that stopped halfway stay there,
-and yt-dlp picks them up when you download the same choice again.
+when it is complete. Parts of a download that stopped halfway, with
+**Cancel** or an error, stay there, and yt-dlp picks them up when you
+download the same choice again.
 
 **A link with several videos**, such as a post with more than one, shows a
 list of them first (up to 20) and downloads the one you pick.
 
-**When something goes wrong**, keepclip shows the reason yt-dlp gave and
-keeps the window open until you press Enter.
+**When something goes wrong**, keepclip shows the reason yt-dlp gave, ready
+to copy, with **Try again**. The console keeps its window open until you
+press Enter.
+
+**The notification.** When a download ends while the window is not in front,
+keepclip shows a Windows notification; click it to open the folder. The
+console always shows it.
 
 ### Start from another app
 
@@ -136,15 +145,19 @@ it with the link you copied:
 "C:\path\to\keepclip.exe" --clipboard
 ```
 
-When it has the console window to itself, keepclip closes it two seconds
-after the download; the notification stays in the Windows notification
-center. If Windows does not show the notification, the window waits for
-Enter instead.
+The window opens at once, with the focus, so the number keys work without a
+click.
+
+`keepclip-cli.exe --clipboard` does the same in a console. When it has the
+console window to itself, it closes it two seconds after the download; the
+notification stays in the Windows notification center. If Windows does not
+show the notification, the console waits for Enter instead.
 
 ## Configuration
 
 The settings file is `%APPDATA%\keepclip\config.toml`. keepclip writes it
-when you pick the download folder, and you can edit it:
+when you pick the download folder (**Change**, at the bottom of the window,
+picks another), and you can edit it:
 
 ```toml
 version = 1
@@ -161,7 +174,7 @@ version 1.
 
 - **Sites that need a login** do not work yet: keepclip cannot log in for
   you. Public videos work.
-- **Console only**, in English. A window comes in a later version.
+- **In English** only.
 - **Windows only** for now. The logic in `core/` has no Windows code; on
   other systems keepclip expects `yt-dlp`, `ffmpeg` and `deno` in the PATH,
   but it is not tested there.
@@ -171,8 +184,9 @@ version 1.
 ## Privacy
 
 keepclip has no telemetry. It connects to GitHub to download and update its
-programs, and through yt-dlp to the sites of the links you give it. Nothing
-else.
+programs, through yt-dlp to the sites of the links you give it, and, for the
+thumbnail in the window, to the address of the picture yt-dlp reports.
+Nothing else.
 
 ## Building from source
 
@@ -190,16 +204,22 @@ cargo test
 cargo build --release
 ```
 
-Then run `target\release\keepclip.exe`.
+Then run `target\release\keepclip.exe` (the window) or
+`target\release\keepclip-cli.exe` (the console). The interface of the
+window, in `window/ui`, is plain HTML, CSS and JavaScript: there is no Node,
+npm or other build step.
 
 ## Project layout
 
 ```
-core/   library (keepclip-core): pure, testable logic with no Windows code:
-        reads what yt-dlp reports, builds the menu, the download arguments
-        and the settings file, and follows the progress
-cli/    the program (keepclip.exe): console, clipboard, notification, and
-        the download and update of yt-dlp, ffmpeg and Deno
+core/     library (keepclip-core): pure, testable logic with no Windows
+          code: reads what yt-dlp reports, builds the menu, the download
+          arguments and the settings file, and follows the progress
+system/   library (keepclip-system): what both programs share: runs yt-dlp,
+          downloads and updates yt-dlp, ffmpeg and Deno, the settings file,
+          the clipboard and the notification
+window/   the window (keepclip.exe), on Tauri 2, with its interface in ui/
+cli/      the console version (keepclip-cli.exe)
 ```
 
 ## Contributing
@@ -220,6 +240,10 @@ at your option.
 
 The programs keepclip downloads on the first run (yt-dlp, ffmpeg, Deno) are
 not part of keepclip and keep their own licenses.
+
+The icons of the window, in [`window/ui/icons`](window/ui/icons), come from
+[Lucide](https://lucide.dev) and are under the ISC license
+([LICENSE-LUCIDE](window/ui/icons/LICENSE-LUCIDE)).
 
 ### Contribution
 

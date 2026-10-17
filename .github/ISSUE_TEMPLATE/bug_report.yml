@@ -44,6 +44,6 @@ body:
   - type: textarea
     id: output
     attributes:
-      label: What keepclip printed
-      description: Copy the text of the console window. Remove anything you would rather not share, such as folder names.
+      label: What keepclip showed
+      description: In the window, the copy button next to what yt-dlp said copies it; in the console, copy the text of its window. Remove anything you would rather not share, such as folder names.
       render: text

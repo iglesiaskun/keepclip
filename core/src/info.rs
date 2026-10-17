@@ -33,6 +33,23 @@ pub struct VideoInfo {
     /// Position in the playlist, counting from 1, for an entry of one.
     #[serde(default, deserialize_with = "whole")]
     pub playlist_index: Option<u64>,
+    /// Address of the picture that stands for the video: the best one, as
+    /// yt-dlp picks it.
+    #[serde(default, deserialize_with = "words")]
+    pub thumbnail: Option<String>,
+    /// Every picture the site lists, from worst to best. yt-dlp does not
+    /// check them: some may not exist.
+    #[serde(default)]
+    pub thumbnails: Vec<Thumbnail>,
+}
+
+/// A picture of the video, in one size.
+#[derive(Debug, Clone, Deserialize)]
+pub struct Thumbnail {
+    #[serde(default, deserialize_with = "words")]
+    pub url: Option<String>,
+    #[serde(default, deserialize_with = "whole")]
+    pub width: Option<u64>,
 }
 
 /// A file yt-dlp can download for a video: video, sound or both.
@@ -99,6 +116,28 @@ impl VideoInfo {
     /// leaves the uploader empty.
     pub fn author(&self) -> Option<&str> {
         self.uploader.as_deref().or(self.channel.as_deref())
+    }
+
+    /// Addresses of a picture of the video, to try in order: the smallest
+    /// at least `width` pixels wide, then yt-dlp's pick, which is often much
+    /// bigger. Empty when the site lists none.
+    pub fn thumbnail_urls(&self, width: u64) -> Vec<&str> {
+        let smallest_wide_enough = self
+            .thumbnails
+            .iter()
+            .filter(|t| t.width.is_some_and(|w| w >= width))
+            .min_by_key(|t| t.width)
+            .and_then(|t| t.url.as_deref());
+        let mut urls: Vec<&str> = Vec::new();
+        for url in [smallest_wide_enough, self.thumbnail.as_deref()]
+            .into_iter()
+            .flatten()
+        {
+            if !urls.contains(&url) {
+                urls.push(url);
+            }
+        }
+        urls
     }
 }
 

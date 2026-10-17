@@ -1,58 +1,40 @@
-//! keepclip: downloads a video from a copied link. It asks yt-dlp what the
+//! keepclip-cli: the console version of keepclip. It asks yt-dlp what the
 //! link offers, shows a menu with the size of each choice, downloads the one
 //! picked into the download folder and says where the file is.
 
-mod clipboard;
 mod console;
-mod fetch;
-mod notify;
-mod settings;
-mod tools;
-mod ytdlp;
+mod first_run;
 
 use keepclip_core::download::Request;
 use keepclip_core::info::VideoInfo;
 use keepclip_core::menu::{self, Choice};
 use keepclip_core::progress::{self, Event, Status};
 use keepclip_core::{link, units};
+use keepclip_system::args::{self, Args, Command};
+use keepclip_system::files::{self, Moved};
+use keepclip_system::stop::Stop;
+use keepclip_system::ytdlp::YtDlp;
+use keepclip_system::{Result, clipboard, notify, settings};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::time::Duration;
 
-/// Errors end the run with a message; there is nothing to recover.
-type Result<T, E = Box<dyn std::error::Error>> = std::result::Result<T, E>;
-
-const HELP: &str = "\
-Download a video from a copied link.
-
-Usage:
-  keepclip [LINK]            downloads LINK; without it, the link in the
-                             clipboard, or one you paste
-  keepclip --clipboard       downloads the link in the clipboard
-  keepclip --choose-folder   picks the download folder again
-
-Options:
-  --dir FOLDER   keeps the settings file in FOLDER instead of
-                 %APPDATA%\\keepclip (handy for testing)
-  --help         shows this help
-  --version      shows the version
-";
-
-/// What the command line asks for.
-#[derive(Debug, Default)]
-struct Args {
-    link: Option<String>,
-    clipboard: bool,
-    choose_folder: bool,
-    dir: Option<PathBuf>,
-}
+/// The name the help gives the program.
+const PROGRAM: &str = "keepclip-cli";
 
 fn main() -> ExitCode {
-    let args = match parse_args(std::env::args().skip(1)) {
-        Ok(Some(args)) => args,
-        Ok(None) => return ExitCode::SUCCESS,
+    let args = match args::parse(std::env::args().skip(1)) {
+        Ok(Command::Run(args)) => args,
+        Ok(Command::Help) => {
+            print!("{}", args::help(PROGRAM));
+            return ExitCode::SUCCESS;
+        }
+        Ok(Command::Version) => {
+            println!("keepclip {}", env!("CARGO_PKG_VERSION"));
+            return ExitCode::SUCCESS;
+        }
         Err(e) => {
-            eprintln!("keepclip: {e}\n\n{HELP}");
+            eprintln!("{PROGRAM}: {e}\n\n{}", args::help(PROGRAM));
             return ExitCode::FAILURE;
         }
     };
@@ -81,36 +63,6 @@ fn main() -> ExitCode {
     }
 }
 
-/// `Ok(None)` when the command line was fully handled (`--help`).
-fn parse_args(mut words: impl Iterator<Item = String>) -> Result<Option<Args>, String> {
-    let mut args = Args::default();
-    while let Some(word) = words.next() {
-        match word.as_str() {
-            "--help" | "-h" | "/?" => {
-                print!("{HELP}");
-                return Ok(None);
-            }
-            "--version" | "-V" => {
-                println!("keepclip {}", env!("CARGO_PKG_VERSION"));
-                return Ok(None);
-            }
-            "--clipboard" => args.clipboard = true,
-            "--choose-folder" => args.choose_folder = true,
-            "--dir" => {
-                let dir = words.next().ok_or("--dir needs a folder")?;
-                args.dir = Some(PathBuf::from(dir));
-            }
-            _ if word.starts_with('-') => return Err(format!("unknown option {word}")),
-            _ if args.link.is_some() => return Err("give only one link".to_string()),
-            _ => args.link = Some(word),
-        }
-    }
-    if args.clipboard && args.link.is_some() {
-        return Err("give a link or --clipboard, not both".to_string());
-    }
-    Ok(Some(args))
-}
-
 enum Finish {
     Saved {
         notified: bool,
@@ -123,7 +75,7 @@ fn run(args: &Args) -> Result<Finish> {
     let settings_file = settings::file(args.dir.as_deref())?;
     let mut config = settings::load(&settings_file)?;
     if args.choose_folder {
-        settings::choose_folder(&settings_file, &mut config)?;
+        first_run::choose_folder(&settings_file, &mut config)?;
         if args.link.is_none() && !args.clipboard {
             return Ok(Finish::Nothing);
         }
@@ -136,12 +88,12 @@ fn run(args: &Args) -> Result<Finish> {
 
     let folder = match &config.download_dir {
         Some(folder) => folder.clone(),
-        None => settings::choose_folder(&settings_file, &mut config)?,
+        None => first_run::choose_folder(&settings_file, &mut config)?,
     };
 
-    let ytdlp = tools::ready()?;
+    let ytdlp = first_run::ready_tools()?;
     println!("Reading the link...");
-    let (info, json) = ytdlp.info(&url)?;
+    let (info, json) = ytdlp.info(&url, &Stop::new())?;
     let Some((video, playlist_item)) = pick_video(&info)? else {
         return Ok(Finish::Nothing);
     };
@@ -155,7 +107,7 @@ fn run(args: &Args) -> Result<Finish> {
         return Ok(Finish::Nothing);
     };
 
-    let work_folder = work_folder();
+    let work_folder = files::work_folder();
     for dir in [&folder, &work_folder] {
         std::fs::create_dir_all(dir)
             .map_err(|e| format!("Could not create the folder {}: {e}", dir.display()))?;
@@ -190,53 +142,30 @@ fn run(args: &Args) -> Result<Finish> {
     Ok(Finish::Saved { notified })
 }
 
-/// Where yt-dlp makes the files. Parts of an interrupted download stay here,
-/// and yt-dlp resumes them when the same choice is downloaded again.
-fn work_folder() -> PathBuf {
-    std::env::temp_dir().join("keepclip")
-}
-
 fn ask_to_replace(name: &str) -> Result<bool> {
     println!("\nThe folder already has \"{name}\".");
     let answer = console::ask("Replace it? It stays as it is until the new one is ready. (y/N) ")?;
     Ok(answer.eq_ignore_ascii_case("y") || answer.eq_ignore_ascii_case("yes"))
 }
 
-/// Moves the finished file from the work folder into `folder`. A file with
-/// the same name is replaced only when `may_replace`, or when the user says
-/// so now; otherwise the new file is deleted and `None` returned.
+/// Moves the finished file into `folder`. A file with the same name is
+/// replaced only when `may_replace`, or when the user says so now;
+/// otherwise the new file is deleted and `None` returned.
 fn move_into(file: &Path, folder: &Path, may_replace: bool) -> Result<Option<PathBuf>> {
-    let name = file
-        .file_name()
-        .ok_or("yt-dlp gave a path without a file name.")?;
-    let target = folder.join(name);
-    if target.exists() && !may_replace && !ask_to_replace(&name.to_string_lossy())? {
+    let target = match files::move_into(file, folder, may_replace)? {
+        Moved::Saved(target) => return Ok(Some(target)),
+        Moved::Exists(target) => target,
+    };
+    let name = target.file_name().unwrap_or_default().to_string_lossy();
+    if !ask_to_replace(&name)? {
         let _ = std::fs::remove_file(file);
         println!("Kept the file that was there; the new download was deleted.");
         return Ok(None);
     }
-    let fail = |e: std::io::Error| {
-        format!(
-            "Could not move {} to {}: {e}",
-            file.display(),
-            folder.display()
-        )
-    };
-    // A rename replaces the old file in one step. Across drives it fails:
-    // then the file is copied next to the old one first, so a failed copy
-    // never leaves the old file half overwritten.
-    if std::fs::rename(file, &target).is_err() {
-        let mut staging = target.clone().into_os_string();
-        staging.push(".keepclip-part");
-        let staging = PathBuf::from(staging);
-        if let Err(e) = std::fs::copy(file, &staging) {
-            let _ = std::fs::remove_file(&staging);
-            return Err(fail(e).into());
-        }
-        std::fs::rename(&staging, &target).map_err(fail)?;
-        let _ = std::fs::remove_file(file);
+    match files::move_into(file, folder, true)? {
+        Moved::Saved(target) => Ok(Some(target)),
+        Moved::Exists(_) => Err("Could not replace the file.".into()),
     }
-    Ok(Some(target))
 }
 
 /// The link from the command line, the clipboard or the keyboard.
@@ -325,19 +254,14 @@ fn pick_choice(choices: &[Choice]) -> Result<Option<&Choice>> {
 }
 
 /// Downloads with a progress line and returns the path of the saved file.
-fn download(ytdlp: &ytdlp::YtDlp, request: &Request<'_>) -> Result<String> {
+fn download(ytdlp: &YtDlp, request: &Request<'_>) -> Result<String> {
     let mut line = console::StatusLine::default();
     let mut saved = None;
     let mut downloaded = false;
-    let part_name = |format_id: &str| match request.choice {
-        Choice::Video(v) if v.audio.as_deref() == Some(format_id) => "Sound",
-        Choice::Video(_) => "Video",
-        Choice::AudioMp3 { .. } => "Sound",
-    };
-    ytdlp.download(request, |event| match event {
+    ytdlp.download(request, &Stop::new(), |event| match event {
         Event::Download(d) => {
             downloaded = true;
-            let mut text = format!("{:<5} ", part_name(&d.format_id));
+            let mut text = format!("{:<5} ", request.choice.part_name(&d.format_id));
             text.push_str(&console::bar(d.fraction()));
             if let Some(fraction) = d.fraction() {
                 text.push_str(&format!(" {:>3.0}%", fraction * 100.0));
@@ -370,90 +294,4 @@ fn download(ytdlp: &ytdlp::YtDlp, request: &Request<'_>) -> Result<String> {
         println!("The file was ready from an earlier try.");
     }
     saved.ok_or_else(|| "yt-dlp finished without saying where the file is.".into())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn parse(words: &[&str]) -> Result<Option<Args>, String> {
-        parse_args(words.iter().map(|w| w.to_string()))
-    }
-
-    #[test]
-    fn takes_a_link_or_the_clipboard() {
-        let args = parse(&["https://example.com/v/1"]).unwrap().unwrap();
-        assert_eq!(args.link.as_deref(), Some("https://example.com/v/1"));
-        assert!(parse(&["--clipboard"]).unwrap().unwrap().clipboard);
-        assert!(parse(&["--clipboard", "https://example.com/v/1"]).is_err());
-        assert!(parse(&["https://a.example", "https://b.example"]).is_err());
-    }
-
-    #[test]
-    fn reads_the_settings_folder() {
-        let args = parse(&["--dir", "C:\\test", "--choose-folder"])
-            .unwrap()
-            .unwrap();
-        assert_eq!(args.dir, Some(PathBuf::from("C:\\test")));
-        assert!(args.choose_folder);
-        assert!(parse(&["--dir"]).is_err());
-        assert!(parse(&["--frobnicate"]).is_err());
-    }
-
-    /// A work folder and a download folder of their own, removed at the end.
-    struct Folders {
-        root: PathBuf,
-        work: PathBuf,
-        downloads: PathBuf,
-    }
-
-    impl Folders {
-        fn new(test: &str) -> Folders {
-            let root =
-                std::env::temp_dir().join(format!("keepclip-test-{test}-{}", std::process::id()));
-            let (work, downloads) = (root.join("work"), root.join("downloads"));
-            std::fs::create_dir_all(&work).unwrap();
-            std::fs::create_dir_all(&downloads).unwrap();
-            Folders {
-                root,
-                work,
-                downloads,
-            }
-        }
-    }
-
-    impl Drop for Folders {
-        fn drop(&mut self) {
-            let _ = std::fs::remove_dir_all(&self.root);
-        }
-    }
-
-    #[test]
-    fn a_finished_file_moves_to_the_download_folder() {
-        let folders = Folders::new("move");
-        let finished = folders.work.join("A [x].mp4");
-        std::fs::write(&finished, "new").unwrap();
-        let saved = move_into(&finished, &folders.downloads, false).unwrap();
-        assert_eq!(saved, Some(folders.downloads.join("A [x].mp4")));
-        assert_eq!(std::fs::read_to_string(saved.unwrap()).unwrap(), "new");
-        assert!(!finished.exists());
-    }
-
-    #[test]
-    fn an_agreed_replacement_swaps_the_file_once_the_new_one_is_done() {
-        let folders = Folders::new("replace");
-        std::fs::write(folders.downloads.join("A [x].mp4"), "old").unwrap();
-        let finished = folders.work.join("A [x].mp4");
-        std::fs::write(&finished, "new").unwrap();
-        let saved = move_into(&finished, &folders.downloads, true)
-            .unwrap()
-            .unwrap();
-        assert_eq!(std::fs::read_to_string(saved).unwrap(), "new");
-        assert!(!finished.exists());
-        let left: Vec<_> = std::fs::read_dir(&folders.downloads)
-            .unwrap()
-            .map(|e| e.unwrap().file_name())
-            .collect();
-        assert_eq!(left, ["A [x].mp4"]);
-    }
 }

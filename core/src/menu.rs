@@ -94,6 +94,37 @@ impl Choice {
             None => "size unknown".to_string(),
         }
     }
+
+    /// The files yt-dlp downloads for this choice, in order: "Video" and
+    /// "Sound", or one of them.
+    pub fn parts(&self) -> &'static [&'static str] {
+        match self {
+            Choice::Video(v) if v.audio.is_some() => &["Video", "Sound"],
+            Choice::Video(_) => &["Video"],
+            Choice::AudioMp3 { .. } => &["Sound"],
+        }
+    }
+
+    /// Which of [`Choice::parts`] yt-dlp is downloading when it reports
+    /// `format_id`.
+    pub fn part_name(&self, format_id: &str) -> &'static str {
+        match self {
+            Choice::Video(v) if v.audio.as_deref() == Some(format_id) => "Sound",
+            Choice::Video(_) => "Video",
+            Choice::AudioMp3 { .. } => "Sound",
+        }
+    }
+
+    /// What happens after the download, as `progress::describe_step` says
+    /// it: joining video and sound, or converting to MP3. `None` when the
+    /// downloaded file is the final one.
+    pub fn last_step(&self) -> Option<&'static str> {
+        match self {
+            Choice::Video(v) if v.audio.is_some() => Some("Joining video and sound"),
+            Choice::Video(_) => None,
+            Choice::AudioMp3 { .. } => Some("Converting to MP3"),
+        }
+    }
 }
 
 /// The menu for one video: the resolutions from the highest down, then sound

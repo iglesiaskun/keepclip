@@ -242,3 +242,21 @@ fn frame_rates_below_50_are_not_shown() {
     let labels: Vec<String> = lines(json).into_iter().map(|(label, ..)| label).collect();
     assert_eq!(labels, ["720p", "480p 60 fps", "Audio only (MP3)"]);
 }
+
+#[test]
+fn each_choice_names_its_parts_and_last_step() {
+    let menu = menu::build(&info(include_str!("fixtures/separate-streams.json")));
+    let (video, mp3) = (&menu[2], menu.last().unwrap());
+    assert_eq!(video.parts(), ["Video", "Sound"]);
+    assert_eq!(video.part_name("299"), "Video");
+    assert_eq!(video.part_name("140"), "Sound");
+    assert_eq!(video.last_step(), Some("Joining video and sound"));
+    assert_eq!(mp3.parts(), ["Sound"]);
+    assert_eq!(mp3.part_name("140"), "Sound");
+    assert_eq!(mp3.last_step(), Some("Converting to MP3"));
+
+    // Files that carry their own sound download in one part.
+    let menu = menu::build(&info(include_str!("fixtures/single-files.json")));
+    assert_eq!(menu[0].parts(), ["Video"]);
+    assert_eq!(menu[0].last_step(), None);
+}

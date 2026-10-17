@@ -1,8 +1,8 @@
 [package]
-# The package name is also the executable name (keepclip.exe).
-name = "keepclip"
+# The package name is also the executable name (keepclip-cli.exe).
+name = "keepclip-cli"
 version.workspace = true
-description = "Download a video from a copied link, with yt-dlp doing the work."
+description = "Download a video from a copied link, with yt-dlp doing the work: the console version."
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
@@ -10,25 +10,8 @@ publish.workspace = true
 
 [dependencies]
 keepclip-core.workspace = true
-# Standard folders: settings, local data, Videos, Downloads.
-dirs = "7"
-# Checks the SHA-256 of each downloaded tool against the published one.
-sha2 = "0.11"
-# Downloads the tools (yt-dlp, ffmpeg, Deno) over HTTPS on the first run.
-ureq = "3"
-# Unpacks ffmpeg and Deno, which come zipped. Deflate is all they use.
-zip = { version = "9", default-features = false, features = ["deflate"] }
+keepclip-system.workspace = true
 
-# Clipboard, the finished notification and the console window.
-[target.'cfg(windows)'.dependencies.windows]
-version = "0.62"
-features = [
-    "Data_Xml_Dom",
-    "UI_Notifications",
-    "Win32_Foundation",
-    "Win32_System_Console",
-    "Win32_System_DataExchange",
-    "Win32_System_Memory",
-    "Win32_System_Ole",
-    "Win32_System_Registry",
-]
+# Whether keepclip has the console window to itself.
+[target.'cfg(windows)'.dependencies]
+windows = { workspace = true, features = ["Win32_System_Console"] }

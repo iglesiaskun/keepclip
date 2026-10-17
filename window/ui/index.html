@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>keepclip</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <div class="kw" id="kw">
+    <div class="tbar" data-tauri-drag-region="deep">
+      <span class="appic" id="tb-ic"></span>
+      <span class="ttl" id="ttl">keepclip</span>
+      <button type="button" class="cap" data-act="min" id="cap-min" aria-label="Minimize" title="Minimize"></button>
+      <button type="button" class="cap close" data-act="close" id="cap-close" aria-label="Close" title="Close"></button>
+    </div>
+    <div class="kb" id="kb"></div>
+    <div class="kscrim" id="kscrim" hidden></div>
+    <div class="ktoast" id="ktoast" role="status"></div>
+  </div>
+</body>
+</html>

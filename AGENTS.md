@@ -22,9 +22,16 @@ cargo test --all
   reading `yt-dlp -J`, the menu, the yt-dlp arguments, the progress lines,
   checksums, links and the `config.toml` format. Logic that can live without
   the operating system goes here, with its tests in `core/tests/`.
-- `cli/` (`keepclip.exe`): running yt-dlp, downloading the tools, the
-  console, the clipboard and the notification. Windows-only code stays behind
-  `cfg(windows)`, with a fallback for other systems.
+- `system/` (`keepclip-system`): what both programs share and what needs
+  the operating system: the command line, running yt-dlp, downloading the
+  tools, the settings file, moving the finished file, the clipboard and the
+  notification. Asking the user is left to each program. Windows-only code
+  stays behind `cfg(windows)`, with a fallback for other systems.
+- `window/` (`keepclip.exe`): the window, on Tauri 2. Its interface in
+  `window/ui/` is plain HTML, CSS and JavaScript, loaded as they are: no
+  Node, no npm, no build step. `window/build.rs` draws the app icon.
+- `cli/` (`keepclip-cli.exe`): the console version: its questions and its
+  progress line.
 
 ## Invariants
 
@@ -38,6 +45,12 @@ cargo test --all
   never be read as an option.
 - yt-dlp runs with `--ignore-config`: keepclip reads its output and must
   know its shape.
+- yt-dlp runs in a job object (`system/src/job.rs`), so Cancel, or closing
+  keepclip, ends it together with the programs it started.
+- The window loads nothing from the web: its content security policy in
+  `window/tauri.conf.json` allows only its own files and `data:` pictures.
+  keepclip fetches the thumbnails itself and hands them over as `data:`
+  addresses.
 - The progress templates and `progress::parse` change together, with the
   fixture in `core/tests/fixtures/progress-lines.txt`.
 - Fixtures from real yt-dlp output have the title, the uploader, the id and
@@ -48,8 +61,10 @@ cargo test --all
 - Generic names only: code, tests, examples and docs name no brand or product
   of another company, and no video site. Describe sites as "the sites yt-dlp
   supports". The exceptions are what building and running need: Windows,
-  GitHub, the build tools and the programs keepclip downloads (yt-dlp,
-  ffmpeg, Deno).
+  GitHub, the build tools, the programs keepclip downloads (yt-dlp, ffmpeg,
+  Deno) and the Lucide credit.
+- Icons come only from [Lucide](https://lucide.dev), unmodified, in
+  `window/ui/icons/`, next to `LICENSE-LUCIDE`.
 
 ## Conventions
 

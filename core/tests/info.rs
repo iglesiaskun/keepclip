@@ -63,3 +63,37 @@ fn something_else_is_an_error() {
     assert!(VideoInfo::parse("[]").is_err());
     assert!(VideoInfo::parse(r#"{"title": "no id"}"#).is_err());
 }
+
+#[test]
+fn a_small_thumbnail_comes_before_the_big_one() {
+    // As sites list them: some without a size, from worst to best, and
+    // yt-dlp's pick, the best, repeated at the top level.
+    let video = VideoInfo::parse(
+        r#"{
+            "id": "x",
+            "thumbnail": "https://example.com/t/max.jpg",
+            "thumbnails": [
+                {"url": "https://example.com/t/0.jpg"},
+                {"url": "https://example.com/t/small.jpg", "width": 168, "height": 94},
+                {"url": "https://example.com/t/medium.jpg", "width": 336, "height": 188},
+                {"url": "https://example.com/t/large.jpg", "width": 640, "height": 480},
+                {"url": "https://example.com/t/max.jpg", "width": 1280, "height": 720}
+            ]
+        }"#,
+    )
+    .unwrap();
+    assert_eq!(
+        video.thumbnail_urls(320),
+        [
+            "https://example.com/t/medium.jpg",
+            "https://example.com/t/max.jpg"
+        ]
+    );
+    // None wide enough: only yt-dlp's pick, once.
+    assert_eq!(
+        video.thumbnail_urls(2000),
+        ["https://example.com/t/max.jpg"]
+    );
+    let bare = VideoInfo::parse(r#"{"id": "y"}"#).unwrap();
+    assert!(bare.thumbnail_urls(320).is_empty());
+}
