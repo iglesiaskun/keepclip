@@ -1,0 +1,35 @@
+# Settings for cargo-about, which lists the open source crates compiled into
+# keepclip.exe and keepclip-cli.exe and their licenses:
+# THIRD-PARTY-NOTICES.html, shipped with every release. Their licenses ask for
+# this notice to travel with the program.
+
+# Licenses keepclip can ship, in order of preference when a crate offers a
+# choice ("MIT OR Apache-2.0"). A crate under any other license stops the
+# release until someone checks it and adds the license here.
+#
+# Besides MIT and Apache-2.0, the crates come under:
+# - BSD-3-Clause, ISC and Zlib, permissive like MIT;
+# - CDLA-Permissive-2.0, for the list of trusted certificate authorities
+#   (webpki-roots) that the HTTPS downloads check against: it asks only for
+#   its text to travel with the data;
+# - MPL-2.0, from the window, which lets keepclip ship those crates unchanged
+#   under its own license, as long as the notice says where their source code
+#   is (each crate, with its version, is on crates.io).
+accepted = [
+    "MIT",
+    "Apache-2.0",
+    "Unicode-3.0",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "CDLA-Permissive-2.0",
+    "MPL-2.0",
+]
+
+# Only what ends up in the Windows executables.
+targets = ["x86_64-pc-windows-msvc"]
+ignore-build-dependencies = true
+ignore-dev-dependencies = true
+
+# keepclip's own crates are covered by LICENSE-MIT and LICENSE-APACHE.
+private = { ignore = true }

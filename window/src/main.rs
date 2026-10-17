@@ -21,11 +21,14 @@ use tauri::{PhysicalPosition, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 const WIDTH: f64 = 440.0;
 const HEIGHT: f64 = 560.0;
 
+/// What the help says it does without a link.
+const WITHOUT_LINK: [&str; 2] = ["without it, opens with the", "copied link ready to read"];
+
 fn main() -> ExitCode {
     let args = match args::parse(std::env::args().skip(1)) {
         Ok(Command::Run(args)) => args,
         Ok(Command::Help) => {
-            shell::message(&args::help("keepclip"), false);
+            shell::message(&args::help("keepclip", WITHOUT_LINK), false);
             return ExitCode::SUCCESS;
         }
         Ok(Command::Version) => {
@@ -34,7 +37,7 @@ fn main() -> ExitCode {
         }
         Err(e) => {
             shell::message(
-                &format!("keepclip: {e}\n\n{}", args::help("keepclip")),
+                &format!("keepclip: {e}\n\n{}", args::help("keepclip", WITHOUT_LINK)),
                 true,
             );
             return ExitCode::FAILURE;

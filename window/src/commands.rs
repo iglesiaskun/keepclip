@@ -337,6 +337,9 @@ pub struct StartView {
     folder: Option<String>,
     /// `--choose-folder` with a link: pick the folder, then read the link.
     pick_folder_first: bool,
+    /// Opened like any app, with nothing given: the interface puts the
+    /// copied link in the field, and nothing starts until the user says so.
+    ask_first: bool,
     version: &'static str,
 }
 
@@ -350,6 +353,7 @@ fn start(state: tauri::State<'_, State>) -> StartView {
         not_a_link: None,
         folder: folder.as_ref().map(|f| f.display().to_string()),
         pick_folder_first: false,
+        ask_first: args.nothing_given(),
         version: env!("CARGO_PKG_VERSION"),
     };
     if args.choose_folder && args.link.is_none() && !args.clipboard {
@@ -361,6 +365,7 @@ fn start(state: tauri::State<'_, State>) -> StartView {
             Some(url) => start.link = Some(url.to_string()),
             None => start.not_a_link = Some(given.clone()),
         },
+        None if start.ask_first => {}
         None => {
             start.link = clipboard::text()
                 .as_deref()

@@ -5,8 +5,9 @@
 [Read in English](README.md)
 
 Salve um vídeo a partir de um link copiado, sem sites de download cheios de
-anúncios: copie o link, abra o keepclip, escolha a qualidade pelo tamanho e o
-arquivo vai para a sua pasta de downloads. Funciona com os
+anúncios: copie o link, abra o keepclip pelo Menu Iniciar, escolha a
+qualidade pelo tamanho e o arquivo vai para a sua pasta de downloads.
+Funciona com os
 [sites suportados pelo yt-dlp](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md)
 e fecha quando termina: nada fica rodando em segundo plano.
 
@@ -23,25 +24,51 @@ mesmas opções. O que muda em cada versão está no [changelog](CHANGELOG.md)
 ## Como funciona
 
 1. Copie o link de um vídeo.
-2. Abra o keepclip com `--clipboard`, por um atalho, um lançador ou uma ação
-   do mouse (veja [Abrir por outro app](#abrir-por-outro-app)).
-3. O keepclip abre no meio da tela onde está o mouse, pergunta ao yt-dlp o
-   que o link oferece e mostra o vídeo, com a miniatura, e as opções, com o
+2. Abra o keepclip pelo Menu Iniciar. O link que você copiou já está no
+   campo; ou cole um.
+3. Clique em **Read link** (ler o link). O keepclip pergunta ao yt-dlp o que
+   o link oferece e mostra o vídeo, com a miniatura, e as opções, com o
    tamanho de cada uma.
 4. Clique numa, ou aperte o número dela. O keepclip mostra o progresso, salva
-   o arquivo e oferece **Open folder** (abrir a pasta) e **Play** (tocar). A
-   janela fecha sozinha cinco segundos depois, a menos que o mouse esteja
-   sobre ela.
+   o arquivo e oferece **Open folder** (abrir a pasta), **Play** (tocar) e
+   **Download another** (baixar outro). A janela fecha sozinha cinco segundos
+   depois, a menos que o mouse esteja sobre ela.
+
+O keepclip também pode abrir por um atalho de teclado, um lançador ou um
+botão do mouse e ler o link copiado na hora: veja
+[Abrir por outro app](#abrir-por-outro-app).
 
 ## Instalação
 
-Ainda não há downloads prontos: compile o keepclip a partir do código, como
-explica [Compilar a partir do código](#compilar-a-partir-do-código). Ele
-precisa do Windows 10 ou 11, 64 bits. A janela precisa também do WebView2
-Runtime, a parte do Windows que mostra páginas web dentro dos apps: o
-Windows 11 já vem com ele, e o Windows Update já o instalou na maioria dos
-computadores com Windows 10. Onde ele falta, o `keepclip.exe` avisa, com o
-link para baixá-lo de graça, e o `keepclip-cli.exe` funciona sem ele.
+Requisitos:
+
+- Windows 10 ou 11, 64 bits.
+- Para a janela, o WebView2 Runtime, a parte do Windows que mostra páginas
+  web dentro dos apps. O Windows 11 já vem com ele, e o Windows Update já o
+  instalou na maioria dos computadores com Windows 10. Onde ele falta, o
+  `keepclip.exe` avisa, com o link para baixá-lo de graça:
+  <https://developer.microsoft.com/microsoft-edge/webview2/>. A versão de
+  console, `keepclip-cli.exe`, funciona sem ele.
+
+Para instalar:
+
+1. Baixe a versão mais recente na
+   [página de Releases](https://github.com/iglesiaskun/keepclip/releases/latest):
+   - **`keepclip-<versão>-windows-x64.msi`** (recomendado) instala o keepclip
+     só para o seu usuário, sem pedir administrador, em
+     `%LOCALAPPDATA%\Programs\keepclip`. Ele põe o keepclip no Menu Iniciar
+     e a pasta dele no seu PATH, para o `keepclip-cli` funcionar em qualquer
+     terminal aberto depois. Para atualizar, rode o `.msi` mais novo; um
+     keepclip aberto fecha antes.
+   - **`keepclip-<versão>-windows-x64.zip`** roda sem instalar: descompacte
+     onde quiser e abra o `keepclip.exe`.
+2. Se o Windows mostrar "O Windows protegeu o computador", clique em **Mais
+   informações** e depois em **Executar assim mesmo**. Os arquivos ainda não
+   têm assinatura de código, então o SmartScreen avisa sobre qualquer
+   download novo do keepclip; os arquivos são gerados no GitHub a partir
+   deste repositório, e você pode conferi-los, como explica
+   [Conferir um download](#conferir-um-download).
+3. Abra o **keepclip** pelo Menu Iniciar.
 
 ### Primeira execução
 
@@ -64,35 +91,62 @@ keepclip não inclui nem distribui nenhum deles. Os sites mudam com
 frequência, então o keepclip atualiza o yt-dlp (`yt-dlp -U`) quando a última
 verificação tem mais de 7 dias.
 
+### Conferir um download
+
+Cada release lista o checksum SHA-256 dos arquivos em `SHA256SUMS`. Compare
+a linha do seu arquivo com o que o PowerShell mostra para ele:
+
+```powershell
+Get-FileHash keepclip-0.1.0-windows-x64.msi
+```
+
+Os arquivos têm também um atestado de build, que diz que foram gerados pelo
+workflow de release deste repositório. Com o [GitHub CLI](https://cli.github.com):
+
+```powershell
+gh attestation verify keepclip-0.1.0-windows-x64.msi --repo iglesiaskun/keepclip
+```
+
 ### Desinstalar
 
-Apague o `keepclip.exe` e o `keepclip-cli.exe` e depois as pastas
-`%APPDATA%\keepclip` (configurações) e `%LOCALAPPDATA%\keepclip` (os
-programas baixados e os arquivos da própria janela), e `%TEMP%\keepclip` se
-existir (pedaços de downloads que não terminaram). Para
-tirar o nome que o keepclip registra para as notificações, apague a chave do
-registro `HKEY_CURRENT_USER\Software\Classes\AppUserModelId\keepclip`. Seus
-vídeos ficam na pasta de downloads.
+**Instalado pelo `.msi`**: remova o keepclip em Configurações > Aplicativos >
+Aplicativos instalados. Isso apaga também os programas que ele baixou e os
+arquivos da própria janela (`%LOCALAPPDATA%\keepclip`), os pedaços de
+downloads que não terminaram (`%TEMP%\keepclip`) e a pasta dele no seu
+PATH. As configurações ficam em `%APPDATA%\keepclip`, para uma instalação
+futura; apague essa pasta para tirar tudo.
+
+**Pelo `.zip`**: apague a pasta dele e depois as pastas `%APPDATA%\keepclip`
+(configurações) e `%LOCALAPPDATA%\keepclip` (os programas baixados e os
+arquivos da própria janela), e `%TEMP%\keepclip` se existir (pedaços de
+downloads que não terminaram). Para tirar o nome que o keepclip registra
+para as notificações, apague a chave do registro
+`HKEY_CURRENT_USER\Software\Classes\AppUserModelId\keepclip`.
+
+Nos dois casos, seus vídeos ficam na pasta de downloads.
 
 ## Usando o keepclip
 
-```bash
-keepclip --clipboard
-```
+Aberto pelo Menu Iniciar, o keepclip mostra um campo para o link. Um link que
+você copiou já está nele, e um link copiado com o keepclip aberto entra no
+campo quando você volta para a janela, a menos que você tenha digitado algo
+nele. Nada é lido até você clicar em **Read link** ou apertar Enter. A
+engrenagem ao lado da pasta, na barra de baixo, abre as configurações: a
+pasta de downloads e a versão de cada programa.
 
-baixa o link da área de transferência. As outras formas de abrir:
+Pela linha de comando ou por um atalho:
 
 | Comando | Faz |
 |---|---|
-| `keepclip <link>` | baixa esse link |
-| `keepclip` | usa o link da área de transferência ou pede para colar um |
-| `keepclip --choose-folder` | escolhe de novo a pasta de downloads; na janela, sozinho, abre as configurações, com a versão de cada programa |
+| `keepclip` | abre com o link copiado no campo, pronto para ler |
+| `keepclip --clipboard` | lê na hora o link da área de transferência |
+| `keepclip <link>` | lê esse link na hora |
+| `keepclip --choose-folder` | escolhe de novo a pasta de downloads; sozinho, abre as configurações |
 | `keepclip --dir <pasta>` | guarda o arquivo de configurações nessa pasta, útil para testes |
 
-O `keepclip-cli` aceita as mesmas opções. Na janela, as teclas 1 a 9
-escolhem uma linha e Esc fecha. Sem link na área de transferência, a janela
-mostra um campo para colar e lê a área de transferência de novo quando ganha
-o foco, então um link copiado depois que ela abriu também funciona.
+O `keepclip-cli` aceita as mesmas opções; sem link, ele usa o da área de
+transferência ou pede um. Na janela, as teclas 1 a 9 escolhem uma linha e
+Esc fecha.
 
 **As opções.** Há uma linha por resolução, da maior para a menor, e depois
 **Audio only (MP3)** (só o áudio). Em cada resolução o keepclip escolhe o
@@ -138,16 +192,19 @@ console sempre mostra.
 
 ### Abrir por outro app
 
-O keepclip foi feito para ser aberto por outro programa e fechar quando
-termina. Qualquer lançador, atalho de teclado ou ação do mouse que rode um
-programa pode abri-lo com o link copiado:
+O keepclip também funciona como uma ação rápida: copie um link, aperte uma
+tecla ou um botão do mouse, escolha a qualidade e pronto. Qualquer lançador,
+atalho de teclado ou ferramenta do mouse que rode um programa pode abri-lo
+com o link copiado:
 
 ```
-"C:\caminho\para\keepclip.exe" --clipboard
+"%LOCALAPPDATA%\Programs\keepclip\keepclip.exe" --clipboard
 ```
 
-A janela abre na hora, já com o foco, então as teclas dos números funcionam
-sem clicar.
+(Com o `.zip`, use a pasta onde você o descompactou.) A janela abre na hora,
+no meio da tela onde está o mouse, já lendo o link e com o foco, então as
+teclas dos números funcionam sem clicar. Quando a área de transferência não
+tem link, ela mostra o campo para colar e lê um link copiado enquanto espera.
 
 O `keepclip-cli.exe --clipboard` faz o mesmo num console. Quando a janela do
 console é só dele, ele a fecha dois segundos depois do download; a
@@ -158,7 +215,7 @@ mostrar a notificação, o console espera um Enter.
 
 O arquivo de configurações é `%APPDATA%\keepclip\config.toml`. O keepclip o
 escreve quando você escolhe a pasta de downloads (**Change**, na barra de
-baixo da janela, escolhe outra), e você pode editá-lo:
+baixo da janela ou nas configurações, escolhe outra), e você pode editá-lo:
 
 ```toml
 version = 1
@@ -181,6 +238,10 @@ ele conta como versão 1.
   mas não foi testado lá.
 - **Títulos longos**, como posts cheios de hashtags e emoji, viram nomes de
   arquivo longos, cortados em 120 caracteres.
+- **Ainda sem assinatura de código.** O SmartScreen do Windows e alguns
+  antivírus avisam sobre programas novos sem assinatura e sem reputação. A
+  assinatura está nos planos; até lá, [Conferir um download](#conferir-um-download)
+  mostra como confirmar que um arquivo veio deste repositório.
 
 ## Privacidade
 
@@ -210,6 +271,12 @@ Depois rode `target\release\keepclip.exe` (a janela) ou
 `window/ui`, é HTML, CSS e JavaScript puros: não há Node, npm nem outra
 etapa de build.
 
+Os arquivos das releases saem do `packaging/package.ps1`, que o workflow de
+release roda; o comentário no topo dele explica como rodá-lo localmente. Ele
+precisa do [WiX Toolset](https://wixtoolset.org) 5 para o `.msi` e do
+[cargo-about](https://github.com/EmbarkStudios/cargo-about) para a lista de
+licenças de terceiros.
+
 ## Organização do projeto
 
 ```
@@ -221,6 +288,8 @@ system/   biblioteca (keepclip-system): o que os dois programas dividem:
           de configurações, a área de transferência e a notificação
 window/   a janela (keepclip.exe), em Tauri 2, com a interface em ui/
 cli/      a versão de console (keepclip-cli.exe)
+packaging/ o instalador (WiX), o .zip portátil e a lista de licenças de
+          terceiros, gerados pelo package.ps1
 ```
 
 ## Contribuindo
