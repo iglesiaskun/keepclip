@@ -10,6 +10,11 @@ the file lands in your download folder. It works with the
 [sites yt-dlp supports](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md),
 and it closes when it is done: nothing keeps running in the background.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/media/window-dark.png">
+  <img alt="keepclip opened from the Start menu with a copied link in its field, and the choices of a sample video: four resolutions with their sizes, and Audio only (MP3)" src="docs/media/window-light.png">
+</picture>
+
 > **Download only what you have the right to keep:** your own videos, videos
 > under a license that allows it, or videos whose owner lets you save them.
 > Respect copyright and the terms of each site. keepclip is a tool; what you
