@@ -68,7 +68,7 @@ jobs:
           }
           $heading = '^## \[' + [regex]::Escape($version) + '\] - \d{4}-\d{2}-\d{2}$'
           if (-not (Select-String -Path CHANGELOG.md -Pattern $heading -Quiet)) {
-            throw "CHANGELOG.md has no dated section for $version: set the date of its heading first."
+            throw "CHANGELOG.md has no dated section for ${version}: set the date of its heading first."
           }
 
       - name: Test
