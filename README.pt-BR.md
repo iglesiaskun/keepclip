@@ -11,6 +11,11 @@ Funciona com os
 [sites suportados pelo yt-dlp](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md)
 e fecha quando termina: nada fica rodando em segundo plano.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/media/window-dark.png">
+  <img alt="O keepclip aberto pelo Menu Iniciar com um link copiado no campo, e as opções de um vídeo de exemplo: quatro resoluções com o tamanho de cada uma, e só o áudio (MP3)" src="docs/media/window-light.png">
+</picture>
+
 > **Baixe só o que você tem direito de guardar:** seus próprios vídeos,
 > vídeos com licença que permita ou vídeos cujo dono deixa salvar. Respeite os
 > direitos autorais e os termos de cada site. O keepclip é uma ferramenta; o

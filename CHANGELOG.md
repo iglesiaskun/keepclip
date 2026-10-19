@@ -11,7 +11,7 @@ changed.
 
 ## [Unreleased]
 
-## [0.1.0] - TBD
+## [0.1.0] - 2026-10-18
 
 First public release. keepclip saves a video from a link you copied: open it
 from the Start menu, paste the link, pick a quality by its size, and the file
