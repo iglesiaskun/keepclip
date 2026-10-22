@@ -2,9 +2,9 @@
 
 Guidance for AI coding agents working on keepclip. Everything in
 [CONTRIBUTING.md](CONTRIBUTING.md) applies to agents too: the branch and pull
-request workflow, the checks CI runs, the changelog, fixtures, new
-dependencies and the language of code and commits. What keepclip does and
-how to build it are in [README.md](README.md). This file adds what an agent
+request workflow, how to build keepclip, the checks CI runs, the changelog,
+fixtures, new dependencies and the language of code and commits. What
+keepclip does is in [README.md](README.md). This file adds what an agent
 needs on top.
 
 ## Build and check

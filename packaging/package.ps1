@@ -82,7 +82,7 @@ The ``.msi`` installs keepclip for the current user, with no administrator
 rights, and adds it to the Start menu; the ``.zip`` runs without installing.
 Either way, keepclip downloads yt-dlp, ffmpeg and Deno on the first run. The
 files are not signed yet, so Windows may warn before running them: see
-"Install" in the README.
+"Known limitations" in the README.
 
 $check
 "@

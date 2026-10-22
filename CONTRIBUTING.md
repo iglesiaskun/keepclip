@@ -30,6 +30,49 @@ yt-dlp every week, and the [yt-dlp issues](https://github.com/yt-dlp/yt-dlp/issu
 may already have it. Report it here when keepclip shows the problem in a way
 yt-dlp alone does not.
 
+## Building from source
+
+Requirements (Windows):
+
+- Stable Rust with the `x86_64-pc-windows-msvc` target (installed by `rustup`).
+- Visual Studio or Build Tools with the **Desktop development with C++**
+  workload (provides the MSVC linker and the Windows SDK).
+
+```bash
+cargo test
+```
+
+```bash
+cargo build --release
+```
+
+Then run `target\release\keepclip.exe` (the window) or
+`target\release\keepclip-cli.exe` (the console). `--dir <folder>` keeps the
+settings file in that folder, which is handy for testing without touching
+your real settings. The interface of the window, in `window/ui`, is plain
+HTML, CSS and JavaScript: there is no Node, npm or other build step.
+
+The release files come from [`packaging/package.ps1`](packaging/package.ps1),
+which the release workflow runs; the comment at its top explains how to run
+it locally. It needs [WiX Toolset](https://wixtoolset.org) 5 for the `.msi`
+and [cargo-about](https://github.com/EmbarkStudios/cargo-about) for the list
+of third-party licenses.
+
+## Project layout
+
+```
+core/      library (keepclip-core): pure, testable logic with no Windows
+           code: reads what yt-dlp reports, builds the menu, the download
+           arguments and the settings file, and follows the progress
+system/    library (keepclip-system): what both programs share: runs yt-dlp,
+           downloads and updates yt-dlp, ffmpeg and Deno, the settings file,
+           the clipboard and the notification
+window/    the window (keepclip.exe), on Tauri 2, with its interface in ui/
+cli/       the console version (keepclip-cli.exe)
+packaging/ the installer (WiX), the portable .zip and the list of
+           third-party licenses, made by package.ps1
+```
+
 ## Before opening a pull request
 
 If people will notice the change, add a line to [CHANGELOG.md](CHANGELOG.md)
