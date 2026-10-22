@@ -105,8 +105,9 @@ a linha do seu arquivo com o que o PowerShell mostra para ele:
 Get-FileHash keepclip-0.1.0-windows-x64.msi
 ```
 
-Os arquivos têm também um atestado de build, que diz que foram gerados pelo
-workflow de release deste repositório. Com o [GitHub CLI](https://cli.github.com):
+Quando as notas da release dizem isso, os arquivos têm também um atestado de
+build, que diz que foram gerados pelo workflow de release deste repositório.
+Com o [GitHub CLI](https://cli.github.com):
 
 ```powershell
 gh attestation verify keepclip-0.1.0-windows-x64.msi --repo iglesiaskun/keepclip

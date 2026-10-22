@@ -25,6 +25,9 @@ param(
     [string]$OutDir = 'dist',
     # The project page, for the installer and the release notes.
     [string]$RepoUrl = 'https://github.com/iglesiaskun/keepclip',
+    # The release workflow attests these files; the notes then explain how to
+    # verify that.
+    [switch]$Attested,
     [switch]$SkipNotices,
     [switch]$SkipMsi
 )
@@ -64,6 +67,12 @@ if (-not $section.Success -or -not $section.Groups[1].Value.Trim()) {
     throw "CHANGELOG.md has no section for $version. Add it before releasing."
 }
 $repo = $RepoUrl -replace '^https://github.com/', ''
+$check = 'To check a download, compare `Get-FileHash <file>` with `SHA256SUMS`'
+if ($Attested) {
+    $check += ", or`nverify where it was built with ``gh attestation verify <file> --repo $repo``."
+} else {
+    $check += '.'
+}
 $notes = $section.Groups[1].Value.Trim() + @"
 
 
@@ -75,8 +84,7 @@ Either way, keepclip downloads yt-dlp, ffmpeg and Deno on the first run. The
 files are not signed yet, so Windows may warn before running them: see
 "Install" in the README.
 
-To check a download, compare ``Get-FileHash <file>`` with ``SHA256SUMS``, or
-verify where it was built with ``gh attestation verify <file> --repo $repo``.
+$check
 "@
 [IO.File]::WriteAllText((Join-Path (Resolve-Path $OutDir) 'release-notes.md'), $notes + "`n")
 
