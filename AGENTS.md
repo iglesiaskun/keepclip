@@ -66,7 +66,8 @@ the ones CI runs, and CI fails on any clippy warning.
   of another company, and no video site. Describe sites as "the sites yt-dlp
   supports". The exceptions are what building and running need: Windows,
   WebView2, GitHub, the build tools, the programs keepclip downloads (yt-dlp,
-  ffmpeg, Deno) and the Lucide credit.
+  ffmpeg, Deno), the Lucide credit and SignPath (SignPath Foundation and
+  SignPath.io), which the code signing policy in the README needs.
 - Icons come only from [Lucide](https://lucide.dev), unmodified, in
   `window/ui/icons/`, next to `LICENSE-LUCIDE`.
 
