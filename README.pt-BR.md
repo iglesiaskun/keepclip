@@ -225,9 +225,9 @@ toda semana; o ffmpeg e o Deno ficam como foram baixados da primeira vez.
 
 **Avisos do SmartScreen e de antivírus.** Os arquivos das versões ainda não
 têm assinatura digital: o certificado é caro para um projeto gratuito, e o
-plano é pedir a assinatura gratuita para projetos open source agora que a
-primeira versão saiu. Até lá, o SmartScreen do Windows avisa sobre um programa
-novo e sem reputação ("O Windows protegeu o computador"), e um antivírus pode
+pedido de assinatura gratuita para projetos open source está em andamento,
+como diz a [política de assinatura de código](#política-de-assinatura-de-código).
+Até lá, o SmartScreen do Windows avisa sobre um programa novo e sem reputação ("O Windows protegeu o computador"), e um antivírus pode
 desconfiar de um programa desconhecido que baixa outros programas e os roda,
 que é exatamente o que o keepclip faz com o yt-dlp, o ffmpeg e o Deno. Para
 conferir se o download é o mesmo que o GitHub compilou a partir deste
@@ -260,7 +260,7 @@ no PATH, mas não foi testado lá.
 Não. Ele não tem telemetria. Ele se conecta ao GitHub para baixar e atualizar
 os programas, pelo yt-dlp aos sites dos links que você der e, para a
 miniatura na janela, ao endereço da imagem que o yt-dlp informa. Nada além
-disso.
+disso. A [política de privacidade](#política-de-privacidade) tem os detalhes.
 
 **Com quais sites ele funciona?**
 Com os [sites suportados pelo yt-dlp](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md),
@@ -299,8 +299,8 @@ própria pasta.
 Esta primeira versão é pequena de propósito, e o que as pessoas disserem dela
 vai guiar as próximas. Na lista, por enquanto:
 
-- Versões com assinatura digital, por um programa gratuito de assinatura
-  para projetos open source, para o SmartScreen parar de avisar.
+- Versões com assinatura digital, para o SmartScreen parar de avisar (veja a
+  [política de assinatura de código](#política-de-assinatura-de-código)).
 - Vídeos que pedem login.
 - Nomes de arquivo mais curtos para títulos cheios de hashtags e emoji.
 - Atualizar o ffmpeg e o Deno de tempos em tempos, como o keepclip já faz com
@@ -319,6 +319,61 @@ entram e como compilar o keepclip a partir do código.
 
 Problemas de segurança devem ser relatados em particular, como o
 [SECURITY.md](SECURITY.md) explica.
+
+## Política de assinatura de código
+
+O pedido de assinatura de código gratuita à
+[SignPath Foundation](https://signpath.org), que assina projetos open source,
+está em andamento. Até ele ser aprovado, os arquivos das versões não têm
+assinatura; ["Limitações conhecidas"](#limitações-conhecidas) explica como
+conferi-los enquanto isso.
+
+Depois de aprovado, cada versão é assinada assim:
+
+- Só vão para a assinatura os arquivos que o
+  [workflow de release](.github/workflows/release.yml) compila no GitHub
+  Actions, a partir de uma tag de versão deste repositório: o `keepclip.exe`
+  e o `keepclip-cli.exe`, que vão no `.msi` e no `.zip`, e depois o próprio
+  `.msi`.
+- Um aprovador confere e aprova à mão cada pedido de assinatura.
+- Os programas que o keepclip baixa na primeira execução (yt-dlp, ffmpeg,
+  Deno) não fazem parte do keepclip e não são assinados por ele. No lugar
+  disso, o keepclip confere cada um com o SHA-256 publicado junto.
+
+### Papéis
+
+- Autores, que podem mudar o código sem outra revisão:
+  Pedro ([@iglesiaskun](https://github.com/iglesiaskun))
+- Revisores, que conferem toda mudança de quem não é autor:
+  Pedro ([@iglesiaskun](https://github.com/iglesiaskun))
+- Aprovadores, que decidem se cada pedido de assinatura é assinado:
+  Pedro ([@iglesiaskun](https://github.com/iglesiaskun))
+
+Toda mudança, inclusive as do mantenedor, chega ao `main` por um pull request
+que passa no CI.
+
+### Política de privacidade
+
+O keepclip não manda telemetria, não pede conta e não procura atualizações de
+si mesmo. Ele só se conecta a outros computadores para fazer o que você pede:
+
+- **O site do link.** O yt-dlp lê o link que você der e baixa o vídeo desse
+  site e dos servidores que o site indicar, às vezes pelo ffmpeg. Isso fica
+  entre você e o site, sob os termos e a política de privacidade dele.
+- **Os programas que ele baixa.** Na primeira execução, depois que você
+  concorda, o keepclip baixa o yt-dlp, o ffmpeg e o Deno, com as somas de
+  verificação, das releases oficiais de cada um no GitHub.
+- **Atualizações do yt-dlp.** Antes de ler um link, quando a última checagem
+  tem mais de 7 dias, o keepclip roda `yt-dlp -U`, que procura um yt-dlp mais
+  novo no GitHub e o instala.
+- **Miniaturas.** A janela mostra uma miniatura de cada vídeo, que o keepclip
+  baixa do endereço informado pelo yt-dlp, em geral nos servidores do site.
+
+O Deno roda o JavaScript do site no seu computador, para o yt-dlp, sem acesso
+à rede. Como em qualquer download, cada servidor vê o seu endereço IP. As
+requisições do próprio keepclip não levam nada sobre você: elas se
+identificam só como `keepclip/<versão>`. Os downloads do GitHub seguem a
+[Declaração de Privacidade Geral do GitHub](https://docs.github.com/pt/site-policy/privacy-policies/github-general-privacy-statement).
 
 ## Licença
 
